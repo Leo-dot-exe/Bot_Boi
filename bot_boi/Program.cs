@@ -2,10 +2,15 @@
 using Discord;
 using Discord.Net;
 using Discord.Commands;
+using Discord.Interactions;
 using Discord.WebSocket;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
+using Microsoft.Extensions.DependencyInjection;
+using System.Threading;
+
+// using CSharpBot.Services;
 
 namespace cSharpBot
 {
@@ -19,10 +24,10 @@ namespace cSharpBot
       await new Program().MainAsync();
     }
 
-    public async Task MainAsync(string[] args)
-    {
+    // public async Task MainAsync(string[] args)
+    // {
 
-    }
+    // }
 
     public Program() //CONSTRUCTOR
     {
@@ -91,7 +96,7 @@ namespace cSharpBot
       }
       else
       {
-        Console.WriteLine($"Message received: {message.Content}");
+        Console.WriteLine($"Message received: {message.Content} USER_ID: {message.Author.Id}");
       }
 
       // Stop the bot from replying to itself
@@ -104,7 +109,7 @@ namespace cSharpBot
       }
 
       //if luc wrote message react with monke
-      if (message.Author.Id.Equals("1122481591592169573"))
+      if (message.Author.Id == 1122481591592169573)
       {
         IEmote monke = Emote.Parse("<:Monke:1112676381457924096>");
         await message.AddReactionAsync(monke);
