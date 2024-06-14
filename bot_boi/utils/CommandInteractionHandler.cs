@@ -30,6 +30,8 @@ namespace InteractionsHandler
 
     }
 
+
+
     public async void Rolls(SocketSlashCommand command)
     {
       var guildUser = (SocketGuildUser)command.Data.Options.First().Value;

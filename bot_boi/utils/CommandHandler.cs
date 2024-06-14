@@ -46,10 +46,18 @@ namespace cSharpBot.Command
 
     public async Task ClientReady()
     {
-      Console.WriteLine("Client Ready!");
 
       ulong guildid = ulong.Parse(_config["SERVER_ID"]);
       SocketGuild guild = _client.GetGuild(guildid);
+
+      Console.WriteLine("DO YOU WANT TO CLEAR COMMANDS (Y/N)");
+      string Results = Console.ReadLine().ToUpper();
+      if (Results.Equals("Y") || Results.Equals("y"))
+      {
+        ClearCommands(guild);
+      }
+
+      Console.WriteLine("Client Ready!");
 
 
       var rolls_command = new SlashCommandBuilder()
@@ -93,6 +101,15 @@ namespace cSharpBot.Command
           await command.RespondAsync("This Command is in development sorry");
           break;
       }
+    }
+
+    private void ClearCommands(SocketGuild guild)
+    {
+      Console.WriteLine("DELETEING COMANDS");
+      _client.Rest.DeleteAllGlobalCommandsAsync();
+      Console.WriteLine($"Deleted global commands");
+      guild.DeleteApplicationCommandsAsync();
+      Console.WriteLine($"Deleted guild commands");
     }
   }
 }
