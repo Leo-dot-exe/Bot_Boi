@@ -10,7 +10,7 @@ using Microsoft.Extensions.Configuration.Json;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading;
 
-// using CSharpBot.Services;
+using cSharpBot.Command;
 
 namespace cSharpBot
 {
@@ -18,16 +18,13 @@ namespace cSharpBot
   {
     private readonly DiscordSocketClient _client;
     private readonly IConfiguration _config;
+    private readonly CommandService _commands;
+    private readonly CommandHandler _handler;
 
     public static async Task Main(string[] args)
     {
       await new Program().MainAsync();
     }
-
-    // public async Task MainAsync(string[] args)
-    // {
-
-    // }
 
     public Program() //CONSTRUCTOR
     {
@@ -47,6 +44,9 @@ namespace cSharpBot
         .SetBasePath(AppContext.BaseDirectory)
         .AddJsonFile(path: "config.json");
       _config = _builder.Build();
+
+      _commands = new CommandService();
+      _handler = new CommandHandler(_client, _commands);
     }
 
     public async Task MainAsync()
@@ -55,6 +55,8 @@ namespace cSharpBot
       await _client.LoginAsync(TokenType.Bot, _config["TOKEN"]);
       Console.WriteLine("Starting...");
       await _client.StartAsync();
+
+      await _handler.MainAsync();
 
       await Task.Delay(-1); //Block program until task is closed
     }
@@ -71,9 +73,12 @@ namespace cSharpBot
       return Task.CompletedTask;
     }
 
-    //temp MESSAGE HANDLER
+    //SIMPLE MESSAGE HANDLER
     private async Task MessageReceivedAsync(SocketMessage message)
     {
+      if (message.Author.Id == _client.CurrentUser.Id)
+        return;
+
       //SHOW ALL PROPERTIES
       // foreach (var prop in message.GetType().GetProperties())
       // {
@@ -99,10 +104,7 @@ namespace cSharpBot
         Console.WriteLine($"Message received: {message.Content} USER_ID: {message.Author.Id}");
       }
 
-      // Stop the bot from replying to itself
-      if (message.Author.Id == _client.CurrentUser.Id)
-        return;
-
+      // hello world
       if (message.Content == ".hello")
       {
         await message.Channel.SendMessageAsync("world!");
