@@ -65,7 +65,7 @@ namespace bot_boi.Command
 
       Console.WriteLine("Client Ready!");
 
-
+      //misc commands:
       var rolls_command = new SlashCommandBuilder()
         .WithName("rolls")
         .WithDescription("Shows the rolls of a certain user!")
@@ -109,7 +109,7 @@ namespace bot_boi.Command
           _commandInteractions.Rolls(command);
           break;
         case "mod":
-          _commandInteractions.Temp(command);
+          _ModCommandInteractions.ModCommands(command);
           break;
         case "temp":
           _commandInteractions.Temp(command);

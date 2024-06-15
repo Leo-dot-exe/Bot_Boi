@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration.Json;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading;
 using Newtonsoft.Json;
+using System.Runtime.CompilerServices;
 
 namespace bot_boi.utils.SubCommands
 {
@@ -38,6 +39,7 @@ namespace bot_boi.utils.SubCommands
 
     public static SlashCommandOptionBuilder subCommand2()
     {
+      //???
       return new SlashCommandOptionBuilder()
         .WithName("sub2")
         .WithDescription("temp2")
@@ -63,7 +65,9 @@ namespace bot_boi.utils.SubCommands
   {
     private readonly DiscordSocketClient _client;
     private readonly CommandService _commands;
-    private readonly IConfiguration _settings;
+    private readonly SocketGuild _guild;
+    // private readonly IConfiguration _settings;
+    private readonly IConfiguration _config;
     public ModCommandsHandler(DiscordSocketClient client, CommandService command)
     {
       _client = client;
@@ -71,8 +75,32 @@ namespace bot_boi.utils.SubCommands
 
       var _builder = new ConfigurationBuilder()
         .SetBasePath(AppContext.BaseDirectory)
-        .AddJsonFile(path: "bot_settings.json");
-      _settings = _builder.Build();
+        .AddJsonFile(path: "config.json");
+      _config = _builder.Build();
+
+      _guild = _client.GetGuild(ulong.Parse(_config["SERVER_ID"]));
+
+    }
+
+    public async void ModCommands(SocketSlashCommand command)
+    {
+      Console.WriteLine(command.Data.Name);
+      string name = command.Data.Options.First().Name;
+
+      //check if user has correct permitions
+      var commandUser = _guild.GetUser(command.Data.Id);
+
+      Console.WriteLine($"ROLLES OF COMMAND USER: {commandUser.Roles}");
+
+      switch (name)
+      {
+        case "bot_settings":
+          await command.RespondAsync("SETTINGS HERE");
+          break;
+        default:
+          await command.RespondAsync("This Command is in development sorry");
+          break;
+      }
     }
   }
 }
