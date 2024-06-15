@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Threading;
 using Newtonsoft.Json;
 
-namespace InteractionsHandler
+namespace bot_boi.InteractionsHandler
 {
   public class CommandInteractionHandler
   {
@@ -45,7 +45,7 @@ namespace InteractionsHandler
         .WithColor(Color.Green)
         .WithCurrentTimestamp();
 
-      await command.RespondAsync(embed: embedBuiler.Build());
+      await command.RespondAsync(embed: embedBuiler.Build(), ephemeral: true);
     }
 
     public async void Temp(SocketSlashCommand command)

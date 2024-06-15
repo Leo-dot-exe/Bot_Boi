@@ -11,10 +11,11 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Threading;
 using Newtonsoft.Json;
 
-using InteractionsHandler;
+using bot_boi.InteractionsHandler;
+using bot_boi.utils.SubCommands;
 
 
-namespace cSharpBot.Command
+namespace bot_boi.Command
 {
   public class CommandHandler
   {
@@ -22,6 +23,9 @@ namespace cSharpBot.Command
     private readonly DiscordSocketClient _client;
     private readonly IConfiguration _config;
     private readonly CommandService _commands;
+
+    //sub command handlers
+    private readonly ModCommandsHandler _ModCommandInteractions;
 
     public CommandHandler(DiscordSocketClient client, CommandService commands)
     {
@@ -33,6 +37,9 @@ namespace cSharpBot.Command
       _config = _builder.Build();
 
       _commandInteractions = new CommandInteractionHandler(_client, _commands);
+
+      //different sub command handlers
+      _ModCommandInteractions = new ModCommandsHandler(_client, _commands);
     }
 
     public async Task MainAsync()
@@ -46,13 +53,12 @@ namespace cSharpBot.Command
 
     public async Task ClientReady()
     {
-
       ulong guildid = ulong.Parse(_config["SERVER_ID"]);
       SocketGuild guild = _client.GetGuild(guildid);
 
       Console.WriteLine("DO YOU WANT TO CLEAR COMMANDS (Y/N)");
       string Results = Console.ReadLine().ToUpper();
-      if (Results.Equals("Y") || Results.Equals("y"))
+      if (Results.Equals("Y") || Results.Equals("YES"))
       {
         ClearCommands(guild);
       }
@@ -72,9 +78,17 @@ namespace cSharpBot.Command
         .AddOption("name", ApplicationCommandOptionType.Boolean, "description");
       CreateCommand(temp_command, guild);
 
+      //SUB COMMANDS:
+      var mod_commands = new SlashCommandBuilder()
+        .WithName("mod")
+        .WithDescription("commands for moderators only")
+        .AddOption(ModCommands.Bot_Settings_Command())
+        .AddOption(ModCommands.subCommand2());
+      CreateCommand(mod_commands, guild);
+
     }
 
-    private async void CreateCommand(SlashCommandBuilder command, SocketGuild guild)
+    private async static void CreateCommand(SlashCommandBuilder command, SocketGuild guild)
     {
       try
       {
@@ -94,6 +108,9 @@ namespace cSharpBot.Command
         case "rolls":
           _commandInteractions.Rolls(command);
           break;
+        case "mod":
+          _commandInteractions.Temp(command);
+          break;
         case "temp":
           _commandInteractions.Temp(command);
           break;
@@ -102,6 +119,7 @@ namespace cSharpBot.Command
           break;
       }
     }
+
 
     private void ClearCommands(SocketGuild guild)
     {

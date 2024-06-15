@@ -10,7 +10,7 @@ using Microsoft.Extensions.Configuration.Json;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading;
 
-using cSharpBot.Command;
+using bot_boi.Command;
 
 namespace cSharpBot
 {
