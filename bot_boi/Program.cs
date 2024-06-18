@@ -9,11 +9,18 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading;
+using System.IO;
+using Newtonsoft.Json;
 
 using bot_boi.Command;
 
 namespace cSharpBot
 {
+  class SwearJson
+  {
+    public string[] WORDS;
+  }
+
   class Program
   {
     private readonly DiscordSocketClient _client;
@@ -116,6 +123,23 @@ namespace cSharpBot
         IEmote monke = Emote.Parse("<:Monke:1112676381457924096>");
         await message.AddReactionAsync(monke);
       }
+
+      //reply with cheese
+      if (message.Content.ToUpper().Contains("CHEESE"))
+      {
+        await message.Channel.SendMessageAsync("https://tenor.com/lpag1q8ndU0.gif");
+      }
+
+      //swear checking
+      //json stuff
+      string jsonSwearFile = File.ReadAllText("./DirtyWords.json");
+      SwearJson swears = JsonConvert.DeserializeObject<SwearJson>(jsonSwearFile);
+
+      if (Array.Exists(swears.WORDS, element => element == message.Content))
+      {
+        await message.Channel.SendMessageAsync("Naughty! We dont fucking swear in this fucking christian minecraft server you little shit.");
+      }
+
     }
   }
 }
