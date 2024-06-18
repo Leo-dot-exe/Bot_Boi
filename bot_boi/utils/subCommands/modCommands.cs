@@ -66,40 +66,69 @@ namespace bot_boi.utils.SubCommands
     private readonly DiscordSocketClient _client;
     private readonly CommandService _commands;
     private readonly SocketGuild _guild;
-    // private readonly IConfiguration _settings;
+    private readonly IConfiguration _settings;
     private readonly IConfiguration _config;
-    public ModCommandsHandler(DiscordSocketClient client, CommandService command)
+    public ModCommandsHandler(DiscordSocketClient client, CommandService commands)
     {
       _client = client;
-      _commands = command;
+      _commands = commands;
 
       var _builder = new ConfigurationBuilder()
         .SetBasePath(AppContext.BaseDirectory)
         .AddJsonFile(path: "config.json");
       _config = _builder.Build();
+      var _settingsBuilder = new ConfigurationBuilder()
+        .SetBasePath(AppContext.BaseDirectory)
+        .AddJsonFile(path: "bot_settings.json");
 
       _guild = _client.GetGuild(ulong.Parse(_config["SERVER_ID"]));
-
     }
 
     public async void ModCommands(SocketSlashCommand command)
     {
-      Console.WriteLine(command.Data.Name);
-      string name = command.Data.Options.First().Name;
-
-      //check if user has correct permitions
-      var commandUser = _guild.GetUser(command.Data.Id);
-
-      Console.WriteLine($"ROLLES OF COMMAND USER: {commandUser.Roles}");
-
-      switch (name)
       {
-        case "bot_settings":
-          await command.RespondAsync("SETTINGS HERE");
-          break;
-        default:
-          await command.RespondAsync("This Command is in development sorry");
-          break;
+        Console.WriteLine(command.Data.Name);
+        string name = command.Data.Options.First().Name;
+
+        // check if user has correct permitions
+        ulong serverId;
+        if (!ulong.TryParse(_config["SERVER_ID"], out serverId))
+        {
+          Console.WriteLine("CANT GET SERVER ID");
+        }
+
+        SocketGuild guildTest;
+        guildTest = _client.GetGuild(serverId);
+
+        var commandUser = guildTest.GetUser(command.User.Id);
+        if (commandUser == null)
+        {
+          Console.WriteLine("error");
+        }
+        bool valid = false;
+        foreach (var item in commandUser.Roles)
+        {
+          if (commandUser.Roles.ToString() == "mod")
+          {
+            valid = true;
+          }
+        }
+        if (valid == false)
+        {
+          await command.RespondAsync("You don't have the correct permitions to run this command.");
+          return;
+        }
+
+
+        switch (name)
+        {
+          case "bot_settings":
+            await command.RespondAsync("SETTINGS HERE");
+            break;
+          default:
+            await command.RespondAsync("This Command is in development sorry");
+            break;
+        }
       }
     }
   }
