@@ -33,7 +33,7 @@ namespace bot_boi.Command
       _client = client;
       var _builder = new ConfigurationBuilder()
         .SetBasePath(AppContext.BaseDirectory)
-        .AddJsonFile(path: "config.json");
+        .AddJsonFile(path: "./json/config.json");
       _config = _builder.Build();
 
       _commandInteractions = new CommandInteractionHandler(_client, _commands);
@@ -56,9 +56,8 @@ namespace bot_boi.Command
       ulong guildid = ulong.Parse(_config["SERVER_ID"]);
       SocketGuild guild = _client.GetGuild(guildid);
 
-      Console.WriteLine("DO YOU WANT TO CLEAR COMMANDS (Y/N)");
-      string Results = Console.ReadLine().ToUpper();
-      if (Results.Equals("Y") || Results.Equals("YES"))
+      string Clear = _config["CLEAR_COMMANDS"];
+      if (Clear == "True")
       {
         ClearCommands(guild);
       }

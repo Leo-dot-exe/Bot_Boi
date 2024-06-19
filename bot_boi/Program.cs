@@ -49,7 +49,7 @@ namespace cSharpBot
 
       var _builder = new ConfigurationBuilder()
         .SetBasePath(AppContext.BaseDirectory)
-        .AddJsonFile(path: "config.json");
+        .AddJsonFile(path: "./json/config.json");
       _config = _builder.Build();
 
       _commands = new CommandService();
@@ -132,12 +132,12 @@ namespace cSharpBot
 
       //swear checking
       //json stuff
-      string jsonSwearFile = File.ReadAllText("./DirtyWords.json");
+      string jsonSwearFile = File.ReadAllText("./bin/Debug/net8.0/json/DirtyWords.json");
       SwearJson swears = JsonConvert.DeserializeObject<SwearJson>(jsonSwearFile);
 
       if (Array.Exists(swears.WORDS, element => element == message.Content))
       {
-        await message.Channel.SendMessageAsync("Naughty! We dont fucking swear in this fucking christian minecraft server you little shit.");
+        await message.Channel.SendMessageAsync("Naughty! We dont fucking swear in our christian minecraft server you little shit.");
       }
 
     }

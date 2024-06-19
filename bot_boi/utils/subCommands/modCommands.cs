@@ -75,11 +75,12 @@ namespace bot_boi.utils.SubCommands
 
       var _builder = new ConfigurationBuilder()
         .SetBasePath(AppContext.BaseDirectory)
-        .AddJsonFile(path: "config.json");
+        .AddJsonFile(path: "./json/config.json");
       _config = _builder.Build();
       var _settingsBuilder = new ConfigurationBuilder()
         .SetBasePath(AppContext.BaseDirectory)
-        .AddJsonFile(path: "bot_settings.json");
+        .AddJsonFile(path: "./json/bot_settings.json");
+      _settings = _settingsBuilder.Build();
 
       _guild = _client.GetGuild(ulong.Parse(_config["SERVER_ID"]));
     }
