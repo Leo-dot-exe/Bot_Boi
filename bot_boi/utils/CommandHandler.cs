@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 
 using bot_boi.InteractionsHandler;
 using bot_boi.utils.SubCommands;
+using bot_boi.utils.StatCommands;
 
 
 namespace bot_boi.Command
@@ -44,7 +45,6 @@ namespace bot_boi.Command
 
     public async Task MainAsync()
     {
-
       //hook the client ready command
       _client.Ready += ClientReady;
       _client.SlashCommandExecuted += SlashCommandInteractions;
@@ -84,6 +84,13 @@ namespace bot_boi.Command
         .AddOption(ModCommands.Bot_Settings_Command())
         .AddOption(ModCommands.subCommand2());
       CreateCommand(mod_commands, guild);
+
+      var stat_commands = new SlashCommandBuilder()
+        .WithName("stat")
+        .WithDescription("stat_commands")
+        .AddOption(StatCommands.Stat_Battle_Command())
+        .AddOption(StatCommands.Stat_Character_Create_Command());
+      CreateCommand(stat_commands, guild);
 
     }
 

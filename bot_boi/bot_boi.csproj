@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <Folder Include="services\" />
+    <Folder Include="utils\subCommands\modCommands\" />
   </ItemGroup>
 
 </Project>

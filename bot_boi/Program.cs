@@ -28,10 +28,12 @@ namespace cSharpBot
     private readonly CommandService _commands;
     private readonly CommandHandler _handler;
 
+
     public static async Task Main(string[] args)
     {
       await new Program().MainAsync();
     }
+
 
     public Program() //CONSTRUCTOR
     {
@@ -56,6 +58,7 @@ namespace cSharpBot
       _handler = new CommandHandler(_client, _commands);
     }
 
+
     public async Task MainAsync()
     {
       Console.WriteLine("Logging in...");
@@ -68,11 +71,13 @@ namespace cSharpBot
       await Task.Delay(-1); //Block program until task is closed
     }
 
+
     private Task Log(LogMessage log)
     {
       Console.WriteLine(log.ToString());
       return Task.CompletedTask;
     }
+
 
     private Task Ready()
     {
@@ -80,12 +85,13 @@ namespace cSharpBot
       return Task.CompletedTask;
     }
 
+
     //SIMPLE MESSAGE HANDLER
     private async Task MessageReceivedAsync(SocketMessage message)
     {
+      //check if bot is sending message
       if (message.Author.Id == _client.CurrentUser.Id)
         return;
-
       //SHOW ALL PROPERTIES
       // foreach (var prop in message.GetType().GetProperties())
       // {
@@ -108,14 +114,9 @@ namespace cSharpBot
       }
       else
       {
-        Console.WriteLine($"Message received: {message.Content} USER_ID: {message.Author.Id}");
+        Console.WriteLine($"\nMessage received: \"{message.Content}\"\nNAME: \"{message.Author.Username}\"\nUSER ID: [{message.Author.Id}]\n");
       }
 
-      // hello world
-      if (message.Content == ".hello")
-      {
-        await message.Channel.SendMessageAsync("world!");
-      }
 
       //if luc wrote message react with monke
       if (message.Author.Id == 1122481591592169573)
@@ -124,22 +125,27 @@ namespace cSharpBot
         await message.AddReactionAsync(monke);
       }
 
+
+      //peanut butter
+      if (message.Content.ToUpper().Contains("PEANUT") && message.Content.ToUpper().Contains("BUTTER"))
+      {
+        await message.Channel.SendMessageAsync("https://tenor.com/bG99f.gif");
+      }
+
       //reply with cheese
       if (message.Content.ToUpper().Contains("CHEESE"))
       {
         await message.Channel.SendMessageAsync("https://tenor.com/lpag1q8ndU0.gif");
       }
 
-      //swear checking
-      //json stuff
-      string jsonSwearFile = File.ReadAllText("./bin/Debug/net8.0/json/DirtyWords.json");
-      SwearJson swears = JsonConvert.DeserializeObject<SwearJson>(jsonSwearFile);
 
+      //swear checking
+      string jsonSwearFile = File.ReadAllText("C:/Users/leott/documents/bot_boi/bot_boi/bin/Debug/net8.0/json/DirtyWords.json");//or "./bin/Debug/net8.0/json/DirtyWords.json"
+      SwearJson swears = JsonConvert.DeserializeObject<SwearJson>(jsonSwearFile);
       if (Array.Exists(swears.WORDS, element => element == message.Content))
       {
-        await message.Channel.SendMessageAsync("Naughty! We dont fucking swear in our christian minecraft server you little shit.");
+        await message.Channel.SendMessageAsync("N4ughty! W3 don't fuck1ng sw34r 1n our Chr1st14n M1n3cr4ft s3rv3r you l1ttl3 sh1t.");
       }
-
     }
   }
 }

@@ -97,10 +97,8 @@ namespace bot_boi.utils.SubCommands
         {
           Console.WriteLine("CANT GET SERVER ID");
         }
-
         SocketGuild guildTest;
         guildTest = _client.GetGuild(serverId);
-
         var commandUser = guildTest.GetUser(command.User.Id);
         if (commandUser == null)
         {
@@ -120,7 +118,7 @@ namespace bot_boi.utils.SubCommands
           return;
         }
 
-
+        // find sub command
         switch (name)
         {
           case "bot_settings":
