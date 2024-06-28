@@ -13,8 +13,8 @@ using Newtonsoft.Json;
 
 using bot_boi.InteractionsHandler;
 using bot_boi.utils.SubCommands;
-using bot_boi.utils.StatCommands;
-
+using bot_boi.utils.StatCommands.Commands;
+using static bot_boi.utils.StatCommands.Commands.StatCommands;
 
 namespace bot_boi.Command
 {
@@ -27,6 +27,7 @@ namespace bot_boi.Command
 
     //sub command handlers
     private readonly ModCommandsHandler _ModCommandInteractions;
+    private readonly StatCommandHandler _StatCommandInteractions;
 
     public CommandHandler(DiscordSocketClient client, CommandService commands)
     {
@@ -41,6 +42,7 @@ namespace bot_boi.Command
 
       //different sub command handlers
       _ModCommandInteractions = new ModCommandsHandler(_client, _commands);
+      _StatCommandInteractions = new StatCommandHandler(_client, _commands);
     }
 
     public async Task MainAsync()
@@ -116,6 +118,9 @@ namespace bot_boi.Command
           break;
         case "mod":
           _ModCommandInteractions.ModCommands(command);
+          break;
+        case "stat":
+          _StatCommandInteractions.StatCommands(command);
           break;
         case "temp":
           _commandInteractions.Temp(command);

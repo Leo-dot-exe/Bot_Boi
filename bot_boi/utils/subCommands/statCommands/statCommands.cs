@@ -3,6 +3,7 @@ using Discord;
 using Discord.Net;
 using Discord.Commands;
 using Discord.Interactions;
+using Discord.Commands.Builders;
 using Discord.WebSocket;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -11,9 +12,9 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Threading;
 using Newtonsoft.Json;
 
+using bot_boi.utils.StatCommands.Logic;
 
-
-namespace bot_boi.utils.StatCommands
+namespace bot_boi.utils.StatCommands.Commands
 {
   public class StatCommands
   {
@@ -32,34 +33,44 @@ namespace bot_boi.utils.StatCommands
         .WithName("create_character")
         .WithDescription("create a randomly generated stat character")
         .WithType(ApplicationCommandOptionType.SubCommand)
-        .AddOption("name", ApplicationCommandOptionType.String, "name your character", isRequired: true);
+        .AddOption("name", ApplicationCommandOptionType.String, "name your character", isRequired: true)
+        .AddOption(new SlashCommandOptionBuilder()
+          .WithName("class")
+          .WithDescription("Choose your character's class")
+          .WithType(ApplicationCommandOptionType.String)
+          .WithRequired(true)
+          .AddChoice("warrior", "strength")
+          .AddChoice("mage", "intellegence")
+          .AddChoice("rogue", "speed")
+          .AddChoice("sentinel", "durability")
+          );
     }
-  }
 
-  public class StatCommandHandler
-  {
-    private readonly DiscordSocketClient _client;
-    public StatCommandHandler(DiscordSocketClient client)
+    public class StatCommandHandler
     {
-      _client = client;
-    }
-
-
-    public async void ModCommands(SocketSlashCommand command)
-    {
+      private readonly DiscordSocketClient _client;
+      private readonly CommandService _commands;
+      public StatCommandHandler(DiscordSocketClient client, CommandService command)
       {
-        Console.WriteLine(command.Data.Name);
-        string name = command.Data.Options.First().Name;
-
-        // find sub command
-        switch (name)
+        _client = client;
+        _commands = command;
+      }
+      public async void StatCommands(SocketSlashCommand command)
+      {
         {
-          case "create_character":
-            await command.RespondAsync("SETTINGS HERE");
-            break;
-          default:
-            await command.RespondAsync("This Command is in development sorry");
-            break;
+          Console.WriteLine(command.Data.Name);
+          string name = command.Data.Options.First().Name;
+
+          // find sub command
+          switch (name)
+          {
+            case "create_character":
+              StatCommandLogic.CreateCharacter(command);
+              break;
+            default:
+              await command.RespondAsync("This Stat Command is in development sorry");
+              break;
+          }
         }
       }
     }

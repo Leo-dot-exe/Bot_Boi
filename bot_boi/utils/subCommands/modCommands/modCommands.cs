@@ -125,7 +125,7 @@ namespace bot_boi.utils.SubCommands
             await command.RespondAsync("SETTINGS HERE");
             break;
           default:
-            await command.RespondAsync("This Command is in development sorry");
+            await command.RespondAsync("This Mod Command is in development sorry");
             break;
         }
       }

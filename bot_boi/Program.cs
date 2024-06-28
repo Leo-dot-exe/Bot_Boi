@@ -13,6 +13,7 @@ using System.IO;
 using Newtonsoft.Json;
 
 using bot_boi.Command;
+using bot_boi.utils.StatCommands.Logic;
 
 namespace cSharpBot
 {
@@ -67,6 +68,7 @@ namespace cSharpBot
       await _client.StartAsync();
 
       await _handler.MainAsync();
+      await StatCommandLogic.InitializeDatabase();
 
       await Task.Delay(-1); //Block program until task is closed
     }
