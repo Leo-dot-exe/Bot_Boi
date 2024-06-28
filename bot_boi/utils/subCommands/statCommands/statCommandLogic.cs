@@ -14,6 +14,7 @@ using Newtonsoft.Json;
 //db
 using Dapper;
 using Microsoft.Data.Sqlite;
+using SQLitePCL;
 
 
 namespace bot_boi.utils.StatCommands.Logic
@@ -47,7 +48,7 @@ namespace bot_boi.utils.StatCommands.Logic
       var createStatUsersTable = @"
       CREATE TABLE IF NOT EXISTS StatUsers (
       id INTEGER PRIMARY KEY,
-      user_id INTEGER NOT NULL,
+      user_id TEXT NOT NULL,
       username TEXT NOT NULL
       );";
 
@@ -66,6 +67,12 @@ namespace bot_boi.utils.StatCommands.Logic
 
       await connection.ExecuteAsync(createStatUsersTable);
       await connection.ExecuteAsync(createStatCharactersTable);
+
+      //add some sample data
+      // var insertSampleData = @"
+      // INSERT INTO StatUsers (user_id, username) VALUES (751066073075417136, 'leo.exe_');
+      // ";
+      // await connection.ExecuteAsync(insertSampleData);
     }
     public static async void CreateCharacter(SocketSlashCommand command)
     {
@@ -138,24 +145,52 @@ namespace bot_boi.utils.StatCommands.Logic
       Console.WriteLine($"Durability: {NewCharacter.Durability}");
       Console.WriteLine($"Intellegence: {NewCharacter.Intelligence}");
 
-      await CreateCharacterDB();
+      await CreateCharacterDB(command);
 
     }
 
 
-    private static async Task CreateCharacterDB()
+    private static async Task CreateCharacterDB(SocketSlashCommand command)
     {
-      //conect to db
+      //connect to db
       await using var connection = new SqliteConnection($"Data Source={DbPath}");
       await connection.OpenAsync();
 
-      var query = "SELECT * FROM StatUsers";
+      //for testing
+      await PrintAllStatUsers(connection);
 
-      var results = await connection.QueryAsync<StatUsers>(query);
-      Console.WriteLine(results);
+      //setup query to check if there is a user with the id of the command user
+      var query = "SELECT * FROM StatUsers WHERE user_id = '@UserId'";
+      var parameters = new { UserId = command.User.Id.ToString() };
+      var results = await connection.QueryAsync<StatUsers>(query, parameters);
+
+      //check count of result
+      if (results.Count() <= 0)
+      {
+        Console.WriteLine($"ADDING NEW USER USERNAME: {command.User.Username}");
+        var insertUserData = @"
+        INSERT INTO StatUsers (user_id, username) VALUES ('@UserId', '@Username');
+        ";
+        var UserParams = new { UserId = command.User.Id.ToString(), Username = command.User.Username };
+        await connection.ExecuteAsync(insertUserData);
+      }
+
+      //print result
       foreach (var item in results)
       {
-        Console.WriteLine(item.user_id);
+        Console.WriteLine(item.username);
+      }
+    }
+
+    //for testing
+    private static async Task PrintAllStatUsers(SqliteConnection connection)
+    {
+      var allUsersQuery = "SELECT * FROM StatUsers";
+      var allUsers = await connection.QueryAsync<StatUsers>(allUsersQuery);
+      Console.WriteLine("All StatUsers:");
+      foreach (var user in allUsers)
+      {
+        Console.WriteLine($"ID: {user.id}, UserId: {user.user_id}, Username: {user.username}");
       }
     }
   }
