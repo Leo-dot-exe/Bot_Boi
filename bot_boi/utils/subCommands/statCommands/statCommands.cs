@@ -18,6 +18,21 @@ namespace bot_boi.utils.StatCommands.Commands
 {
   public class StatCommands
   {
+    public static SlashCommandOptionBuilder Stat_Info_Command()
+    {
+      return new SlashCommandOptionBuilder()
+        .WithName("info")
+        .WithDescription("information about how stat commands work or about a specific character")
+        .WithType(ApplicationCommandOptionType.SubCommand)
+        .AddOption("character", ApplicationCommandOptionType.String, "character name", isRequired: false);
+    }
+    public static SlashCommandOptionBuilder Get_all_Characters_Command()
+    {
+      return new SlashCommandOptionBuilder()
+        .WithName("get_all_characters")
+        .WithDescription("gets all the created characters")
+        .WithType(ApplicationCommandOptionType.SubCommand);
+    }
     public static SlashCommandOptionBuilder Stat_Battle_Command()
     {
       return new SlashCommandOptionBuilder()
@@ -39,10 +54,10 @@ namespace bot_boi.utils.StatCommands.Commands
           .WithDescription("Choose your character's class")
           .WithType(ApplicationCommandOptionType.String)
           .WithRequired(true)
-          .AddChoice("warrior", "strength")
-          .AddChoice("mage", "intellegence")
-          .AddChoice("rogue", "speed")
-          .AddChoice("sentinel", "durability")
+          .AddChoice("warrior", "warrior")
+          .AddChoice("mage", "mage")
+          .AddChoice("rogue", "rogue")
+          .AddChoice("sentinel", "sentinel")
           );
     }
 
@@ -58,7 +73,6 @@ namespace bot_boi.utils.StatCommands.Commands
       public async void StatCommands(SocketSlashCommand command)
       {
         {
-          Console.WriteLine(command.Data.Name);
           string name = command.Data.Options.First().Name;
 
           // find sub command
@@ -66,6 +80,12 @@ namespace bot_boi.utils.StatCommands.Commands
           {
             case "create_character":
               StatCommandLogic.CreateCharacter(command);
+              break;
+            case "info":
+              StatCommandLogic.Info(command);
+              break;
+            case "get_all_characters":
+              StatCommandLogic.GetAllCharacters(command);
               break;
             default:
               await command.RespondAsync("This Stat Command is in development sorry");

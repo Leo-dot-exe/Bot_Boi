@@ -68,6 +68,7 @@ namespace cSharpBot
       await _client.StartAsync();
 
       await _handler.MainAsync();
+      await StatCommandLogic.InitializeAsync();
       await StatCommandLogic.InitializeDatabase();
 
       await Task.Delay(-1); //Block program until task is closed

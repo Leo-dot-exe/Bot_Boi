@@ -15,6 +15,9 @@ using Newtonsoft.Json;
 using Dapper;
 using Microsoft.Data.Sqlite;
 using SQLitePCL;
+using System.Dynamic;
+using System.Collections;
+using System.Runtime.CompilerServices;
 
 
 namespace bot_boi.utils.StatCommands.Logic
@@ -23,28 +26,60 @@ namespace bot_boi.utils.StatCommands.Logic
   public class StatUsers
   {
     public int id { get; set; }
-    public int user_id { get; set; }
+    public string user_id { get; set; }
     public string username { get; set; }
   }
-  //STATS STRUCTURE THING
+  //USER DB STRUCTURE
+  public class StatCharacters
+  {
+    public int id { get; set; }
+    public int owner_id { get; set; }
+    public string name { get; set; }
+    public string character_class { get; set; }
+    public int hp { get; set; }
+    public int speed { get; set; }
+    public int strength { get; set; }
+    public int durability { get; set; }
+    public int intelligence { get; set; }
+  }
+
+
+
+
+  //STATS DATA TYPE
   public class StatObject
   {
     public string Name { get; set; }
+    public int Hp { get; set; } //Health points (random from 60 - 100)
     public int Speed { get; set; } //to dodge attackes
     public int Strength { get; set; } //attack strength
     public int Durability { get; set; } //dammage resistance
-    public int Hp { get; set; } //Health points (random from 60 - 100)
     public int Intelligence { get; set; } //More likely to Hit attacks
   }
+
+
+
 
   public class StatCommandLogic
   {
     private const string DbPath = "Stat.db";
+
+    private static SqliteConnection _Connection;
+
+    public static async Task InitializeAsync()
+    {
+      _Connection = await OpenDb();
+    }
+
+    private static async Task<SqliteConnection> OpenDb()
+    {
+      var connection = new SqliteConnection($"Data Source={DbPath}");
+      await connection.OpenAsync();
+      return connection;
+    }
+
     public static async Task InitializeDatabase()
     {
-      using var connection = new SqliteConnection($"Data Source={DbPath}");
-      await connection.OpenAsync();
-
       var createStatUsersTable = @"
       CREATE TABLE IF NOT EXISTS StatUsers (
       id INTEGER PRIMARY KEY,
@@ -54,19 +89,20 @@ namespace bot_boi.utils.StatCommands.Logic
 
       var createStatCharactersTable = @"
         CREATE TABLE IF NOT EXISTS StatCharacters (
-        Id INTEGER PRIMARY KEY,
-        OwnerId INTEGER,
-        Name TEXT NOT NULL,
-        Hp INTEGER NOT NULL,
-        Speed INTEGER NOT NULL,
-        Strength INTEGER NOT NULL,
-        Durability INTEGER NOT NULL,
-        Intelligence INTEGER NOT NULL,
-        FOREIGN KEY (OwnerId) REFERENCES StatUsers (Id)
+        id INTEGER PRIMARY KEY,
+        owner_id INTEGER,
+        name TEXT NOT NULL,
+        character_class TEXT NOT NULL,
+        hp INTEGER NOT NULL,
+        speed INTEGER NOT NULL,
+        strength INTEGER NOT NULL,
+        durability INTEGER NOT NULL,
+        intelligence INTEGER NOT NULL,
+        FOREIGN KEY (owner_id) REFERENCES StatUsers (id)
         );";
 
-      await connection.ExecuteAsync(createStatUsersTable);
-      await connection.ExecuteAsync(createStatCharactersTable);
+      await _Connection.ExecuteAsync(createStatUsersTable);
+      await _Connection.ExecuteAsync(createStatCharactersTable);
 
       //add some sample data
       // var insertSampleData = @"
@@ -74,20 +110,96 @@ namespace bot_boi.utils.StatCommands.Logic
       // ";
       // await connection.ExecuteAsync(insertSampleData);
     }
+
+    //get all characters command
+    public static async void GetAllCharacters(SocketSlashCommand command)
+    {
+      List<StatCharacters> characterList = await GetAllStatCharacters();
+      string message = $"Here are all the characters:\n";
+      StatUsers tempName;
+
+      foreach (var item in characterList)
+      {
+        tempName = await GetStatUserFromId(item.owner_id);
+        message += $"   Name: [{item.name}] Owner: [{tempName.username}]\n";
+      }
+
+      await command.RespondAsync(message);
+    }
+
+    //get all users
+
+
+
+    //INFO COMMAND
+    public static async void Info(SocketSlashCommand command)
+    {
+      string message = "To create a new character do (/stat create_character <character name> <character class>\nCharacters classes are what give it different stats eg:\n  Warrior: Strength\n  Mage: Intellegence\n  Rouge : Speed\n  Sentinel: Durability\n\n To Battle your characters do (/stat battle <character name> <enemy name>))";
+
+      var subCommand = command.Data.Options.FirstOrDefault();
+      if (subCommand == null) { await command.RespondAsync("ERROR WITH SUB COMMAND"); return; }
+      var statClass = subCommand.Options.FirstOrDefault();
+      if (statClass == null)
+      {
+        await command.RespondAsync(message);
+        return;
+      }
+
+      await using var _Connection = new SqliteConnection($"Data Source={DbPath}");
+      await _Connection.OpenAsync();
+
+      string characterName = statClass.Value.ToString() ?? string.Empty;
+
+      //REPLY
+      List<StatCharacters> getCharacter = await GetStatCharacter(characterName);
+
+      int count = getCharacter.Count;
+      Console.WriteLine($"count: {count}");
+      StatUsers tempName;
+
+      if (count <= 0)
+      {
+        await command.RespondAsync($"There is no characters with the name: {characterName}");
+      }
+      else if (count == 1)
+      {
+        foreach (var item in getCharacter)
+        {
+          tempName = await GetStatUserFromId(item.owner_id);
+          message = $"Here is the character \"{item.name}\":\n   Owner: [{tempName.username}]\n   Id: [{item.id}]\n   Owner Id: [{item.owner_id}]\n   Class: [{item.character_class}]\n   HP: [{item.hp}]\n   Speed: [{item.speed}]\n   Strength: [{item.strength}]\n   Durability: [{item.durability}]\n   Intellegence: [{item.intelligence}]";
+        }
+        await command.RespondAsync(message);
+      }
+      else if (count > 1)
+      {
+        message = $"There are multiple characters with the name: {characterName} they are: ";
+        foreach (var item in getCharacter)
+        {
+          tempName = await GetStatUserFromId(item.owner_id);
+          message += $"{item.name}\n   Owner: [{tempName.username}]\n   Id: [{item.id}]\n   Owner Id: [{item.owner_id}]\n   Class: [{item.character_class}]\n   HP: [{item.hp}]\n   Speed: [{item.speed}]\n   Strength: [{item.strength}]\n   Durability: [{item.durability}]\n   Intellegence: [{item.intelligence}],\n\n";
+        }
+        await command.RespondAsync(message);
+      }
+    }
+
+
+    //CREATE NEW CHARACTER COMMAND
     public static async void CreateCharacter(SocketSlashCommand command)
     {
       Random rand = new();
 
       //get character and class name
       var subCommand = command.Data.Options.FirstOrDefault(option => option.Name == "create_character");
+      if (subCommand == null) { await command.RespondAsync("ERROR WITH SUB COMMAND"); return; }
       var statClass = subCommand.Options.FirstOrDefault(option => option.Name == "class");
       var nameOption = subCommand.Options.FirstOrDefault(option => option.Name == "name");
-      string CharacterName = nameOption.Value.ToString();
-      string ClassName = statClass.Value.ToString();
+      if (nameOption == null) { await command.RespondAsync("ERROR WITH NAME OPTION"); return; }
+      if (statClass == null) { await command.RespondAsync("ERROR WITH STAT CHOICE"); return; }
+      string CharacterName = nameOption.Value.ToString() ?? string.Empty;
+      string ClassName = statClass.Value.ToString() ?? string.Empty;
 
       //null checks
-      if (CharacterName == null)
-        return;
+      if (CharacterName == null || ClassName == null) { return; }
 
       //Define proficency modifiers
       int SpeedMod = 0;
@@ -104,19 +216,19 @@ namespace bot_boi.utils.StatCommands.Logic
       //find characters proficency
       switch (ClassName)
       {
-        case "strength":
+        case "warrior":
           StrengthMod = rand.Next(10, 50);
           StrengthMin = 60;
           break;
-        case "intellegence":
+        case "mage":
           IntellegenceMod = rand.Next(10, 50);
           IntellegenceMin = 60;
           break;
-        case "speed":
+        case "rogue":
           SpeedMod = rand.Next(10, 50);
           SpeedMin = 60;
           break;
-        case "durability":
+        case "sentinel":
           DurabilityMod = rand.Next(10, 50);
           durabilityMin = 60;
           break;
@@ -126,7 +238,6 @@ namespace bot_boi.utils.StatCommands.Logic
       }
 
       //set random stats
-      await command.RespondAsync("stat command");
       var NewCharacter = new StatObject
       {
         Name = CharacterName,
@@ -136,63 +247,122 @@ namespace bot_boi.utils.StatCommands.Logic
         Durability = rand.Next(durabilityMin, 100) + DurabilityMod,
         Intelligence = rand.Next(IntellegenceMin, 100) + IntellegenceMod
       };
+      await command.RespondAsync($"Your new character:\n   Name: [{NewCharacter.Name}]\n   Class: [{ClassName}]\n   HP: [{NewCharacter.Hp}]\n   Speed: [{NewCharacter.Speed}]\n   Durability: [{NewCharacter.Durability}]\n   Intelligence: [{NewCharacter.Intelligence}]\nFor more info do (/stat info)");
 
-      //temp
-      Console.WriteLine($"Name: {NewCharacter.Name}");
-      Console.WriteLine($"HP: {NewCharacter.Hp}");
-      Console.WriteLine($"Speed: {NewCharacter.Speed}");
-      Console.WriteLine($"Strength: {NewCharacter.Strength}");
-      Console.WriteLine($"Durability: {NewCharacter.Durability}");
-      Console.WriteLine($"Intellegence: {NewCharacter.Intelligence}");
+      if (NewCharacter.Name.ToUpper() == "TEST") { return; }
 
-      await CreateCharacterDB(command);
-
+      await CreateCharacterDB(command, NewCharacter, ClassName);
     }
 
 
-    private static async Task CreateCharacterDB(SocketSlashCommand command)
+
+
+    private static async Task CreateCharacterDB(SocketSlashCommand command, StatObject character, string className)
     {
-      //connect to db
-      await using var connection = new SqliteConnection($"Data Source={DbPath}");
-      await connection.OpenAsync();
+      int Db_Id;
 
-      //for testing
-      await PrintAllStatUsers(connection);
-
-      //setup query to check if there is a user with the id of the command user
-      var query = "SELECT * FROM StatUsers WHERE user_id = '@UserId'";
-      var parameters = new { UserId = command.User.Id.ToString() };
-      var results = await connection.QueryAsync<StatUsers>(query, parameters);
+      var Id_Check_Results = await GetStatUser(_Connection, command.User.Id.ToString());
 
       //check count of result
-      if (results.Count() <= 0)
+      if (Id_Check_Results.Count() <= 0)
       {
-        Console.WriteLine($"ADDING NEW USER USERNAME: {command.User.Username}");
+        //error here
+        Console.WriteLine($"[STAT] ADDING NEW USER USERNAME: {command.User.Username}");
         var insertUserData = @"
-        INSERT INTO StatUsers (user_id, username) VALUES ('@UserId', '@Username');
+        INSERT INTO StatUsers (user_id, username) VALUES (@UserId, @Username);
         ";
         var UserParams = new { UserId = command.User.Id.ToString(), Username = command.User.Username };
-        await connection.ExecuteAsync(insertUserData);
+        await _Connection.ExecuteAsync(insertUserData, UserParams);
+
+        //setup query to check if there is a user with the id of the command user
+        var Id_Check_Results2 = await GetStatUser(_Connection, command.User.Id.ToString());
+
+        if (Id_Check_Results2.Count() > 0) { Db_Id = Id_Check_Results2.First().id; }
+        else { Console.WriteLine("SOMTHING WRONG HERE"); return; }
+      }
+      else
+      {
+        Db_Id = Id_Check_Results.First().id;
       }
 
-      //print result
-      foreach (var item in results)
-      {
-        Console.WriteLine(item.username);
-      }
+
+      // make new character in db
+      var create_character_db_query = @"
+      INSERT INTO StatCharacters (owner_id, name, hp, character_class, speed, strength, durability, intelligence) 
+      VALUES (@OwnerId, @Name, @Hp, @Class, @Speed, @Strength, @Durability, @Intelligence);
+      ";
+      Console.WriteLine($"[STAT] Created character with name: {character.Name}");
+      var create_character_db_params = new { OwnerId = Db_Id, Name = character.Name, Hp = character.Hp, Class = className, Speed = character.Speed, Strength = character.Strength, Durability = character.Durability, Intelligence = character.Intelligence };
+      await _Connection.ExecuteAsync(create_character_db_query, create_character_db_params);
+
+      //for testing
+      // await PrintAllStatUsers(connection);
+      // await PrintAllStatCharacters(connection);
     }
 
-    //for testing
-    private static async Task PrintAllStatUsers(SqliteConnection connection)
+    //HELPER FUNCTIONS
+    private static async Task<List<StatUsers>> GetStatUser(SqliteConnection _Connection, string user_id)
+    {
+      List<StatUsers> userList = new List<StatUsers>();
+
+      var userQuery = "SELECT * FROM StatUsers WHERE user_id = @UserId";
+      var userParams = new { UserId = user_id };
+      var userResult = await _Connection.QueryAsync<StatUsers>(userQuery, userParams);
+
+      foreach (var item in userResult)
+      {
+        userList.Add(item);
+      }
+      return userList;
+    }
+
+    private static async Task<StatUsers> GetStatUserFromId(int id)
+    {
+      string query = "SELECT * FROM StatUsers WHERE id = @Id";
+      var Params = new { Id = id };
+      var result = await _Connection.QueryAsync<StatUsers>(query, Params);
+      return result.First();
+    }
+
+    private static async Task<List<StatCharacters>> GetStatCharacter(string name)
+    {
+      List<StatCharacters> characterList = new List<StatCharacters>();
+
+      var characterQuery = "SELECT * FROM StatCharacters WHERE name = @Name";
+      var characterParams = new { Name = name };
+      var characterResult = await _Connection.QueryAsync<StatCharacters>(characterQuery, characterParams);
+
+      foreach (var item in characterResult)
+      {
+        characterList.Add(item);
+      }
+      return characterList;
+    }
+
+
+    // TODO reperpose to get all stat users
+    private static async Task PrintAllStatUsers()
     {
       var allUsersQuery = "SELECT * FROM StatUsers";
-      var allUsers = await connection.QueryAsync<StatUsers>(allUsersQuery);
+      var allUsers = await _Connection.QueryAsync<StatUsers>(allUsersQuery);
       Console.WriteLine("All StatUsers:");
       foreach (var user in allUsers)
       {
         Console.WriteLine($"ID: {user.id}, UserId: {user.user_id}, Username: {user.username}");
       }
     }
-  }
+    private static async Task<List<StatCharacters>> GetAllStatCharacters()
+    {
+      List<StatCharacters> characterList = new List<StatCharacters>();
 
+      var allUsersQuery = "SELECT * FROM StatCharacters";
+      var allCharacters = await _Connection.QueryAsync<StatCharacters>(allUsersQuery);
+
+      foreach (var character in allCharacters)
+      {
+        characterList.Add(character);
+      }
+      return characterList;
+    }
+  }
 }
