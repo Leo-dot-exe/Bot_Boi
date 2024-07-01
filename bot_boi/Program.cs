@@ -120,6 +120,11 @@ namespace cSharpBot
         Console.WriteLine($"\nMessage received: \"{message.Content}\"\nNAME: \"{message.Author.Username}\"\nUSER ID: [{message.Author.Id}]\n");
       }
 
+      //for stat battle accepting
+      if (message.Content == "!accept" || message.Content == "!decline")
+      {
+        StatCommandLogic.BattleAccept(message);
+      }
 
       //if luc wrote message react with monke
       if (message.Author.Id == 1122481591592169573)

@@ -18,6 +18,15 @@ namespace bot_boi.utils.StatCommands.Commands
 {
   public class StatCommands
   {
+    public static SlashCommandOptionBuilder Battle_Command()
+    {
+      return new SlashCommandOptionBuilder()
+        .WithName("battle")
+        .WithDescription("battle your character against another character")
+        .WithType(ApplicationCommandOptionType.SubCommand)
+        .AddOption("your_character", ApplicationCommandOptionType.String, "your characters name", isRequired: true)
+        .AddOption("opponent", ApplicationCommandOptionType.String, "your opponents name", isRequired: true);
+    }
     public static SlashCommandOptionBuilder Stat_Info_Command()
     {
       return new SlashCommandOptionBuilder()
@@ -33,15 +42,6 @@ namespace bot_boi.utils.StatCommands.Commands
         .WithDescription("gets all the created characters")
         .WithType(ApplicationCommandOptionType.SubCommand);
     }
-    public static SlashCommandOptionBuilder Stat_Battle_Command()
-    {
-      return new SlashCommandOptionBuilder()
-        .WithName("battle")
-        .WithDescription("start stat battle")
-        .WithType(ApplicationCommandOptionType.SubCommand)
-        .AddOption("user", ApplicationCommandOptionType.User, "set user here", isRequired: true);
-    }
-
     public static SlashCommandOptionBuilder Stat_Character_Create_Command()
     {
       return new SlashCommandOptionBuilder()
@@ -86,6 +86,9 @@ namespace bot_boi.utils.StatCommands.Commands
               break;
             case "get_all_characters":
               StatCommandLogic.GetAllCharacters(command);
+              break;
+            case "battle":
+              StatCommandLogic.Battle(command);
               break;
             default:
               await command.RespondAsync("This Stat Command is in development sorry");

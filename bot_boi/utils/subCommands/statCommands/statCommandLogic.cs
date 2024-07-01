@@ -14,10 +14,6 @@ using Newtonsoft.Json;
 //db
 using Dapper;
 using Microsoft.Data.Sqlite;
-using SQLitePCL;
-using System.Dynamic;
-using System.Collections;
-using System.Runtime.CompilerServices;
 
 
 namespace bot_boi.utils.StatCommands.Logic
@@ -45,7 +41,6 @@ namespace bot_boi.utils.StatCommands.Logic
 
 
 
-
   //STATS DATA TYPE
   public class StatObject
   {
@@ -56,7 +51,6 @@ namespace bot_boi.utils.StatCommands.Logic
     public int Durability { get; set; } //dammage resistance
     public int Intelligence { get; set; } //More likely to Hit attacks
   }
-
 
 
 
@@ -111,23 +105,90 @@ namespace bot_boi.utils.StatCommands.Logic
       // await connection.ExecuteAsync(insertSampleData);
     }
 
+    private static int hasAccepted = 0; // 0 means standby 1/ means accepted 2  means declined
+    private static string oponentTempId = "null";
+
+    //battle command
+    public static async void Battle(SocketSlashCommand command)
+    {
+      //get the 2 characters
+      SocketSlashCommandDataOption battleCommand = command.Data.Options.ElementAt(0);
+
+      List<StatCharacters> character1List = await GetStatCharacter(battleCommand.Options.ElementAt(0).Value.ToString() ?? "null");
+      List<StatCharacters> character2List = await GetStatCharacter(battleCommand.Options.ElementAt(1).Value.ToString() ?? "null");
+
+      //CHECK IF CHARACTER EXISTS    
+      if (character1List.Count < 1)
+      {
+        await command.RespondAsync($"The character \"{battleCommand.Options.ElementAt(0).Value}\" does not exist");
+        return;
+      }
+      else if (character2List.Count < 1)
+      {
+        await command.RespondAsync($"The character \"{battleCommand.Options.ElementAt(1).Value}\" does not exist");
+        return;
+      }
+
+      StatCharacters character1 = character1List.First();
+      StatCharacters character2 = character2List.First();
+
+      //ask if the owner of the challanged character wants to battle
+      StatUsers oponent_user = await GetStatUserFromId(character2.owner_id);
+      await command.RespondAsync($"@<{oponent_user.user_id}> Do you want to battle \"{character1.name}\" With \"{character2.name}\" send \"!accept\" or \"!decline\"");
+      // await command.Channel.SendMessageAsync();
+
+      oponentTempId = oponent_user.user_id;
+
+      // await command.DeferAsync();
+
+      while (true)
+      {
+        if (hasAccepted != 0)
+        {
+          if (hasAccepted == 1)
+          {
+            break;
+          }
+          else
+          {
+            await command.RespondAsync($"{oponent_user.username} has declined");
+            return;
+          }
+        }
+        await Task.Delay(2000);
+      }
+      hasAccepted = 0;
+      //acepted battle here
+      await command.Channel.SendMessageAsync($"{oponent_user.username} has accepted!");
+    }
+
+    public static void BattleAccept(SocketMessage message)
+    {
+      if (message.Content == "!accept" && message.Author.Id.ToString() == oponentTempId)
+      {
+        hasAccepted = 1;
+        oponentTempId = "null";
+      }
+      else if (message.Content == "!decline" && message.Author.Id.ToString() == oponentTempId)
+      {
+        hasAccepted = 2;
+        oponentTempId = "null";
+      }
+    }
+
     //get all characters command
     public static async void GetAllCharacters(SocketSlashCommand command)
     {
       List<StatCharacters> characterList = await GetAllStatCharacters();
       string message = $"Here are all the characters:\n";
       StatUsers tempName;
-
       foreach (var item in characterList)
       {
         tempName = await GetStatUserFromId(item.owner_id);
         message += $"   Name: [{item.name}] Owner: [{tempName.username}]\n";
       }
-
       await command.RespondAsync(message);
     }
-
-    //get all users
 
 
 
@@ -208,29 +269,35 @@ namespace bot_boi.utils.StatCommands.Logic
       int IntellegenceMod = 0;
 
       //Define proficency minimum values
-      int SpeedMin = 20;
-      int StrengthMin = 20;
-      int durabilityMin = 20;
-      int IntellegenceMin = 20;
+      int SpeedMin = 0;
+      int StrengthMin = 0;
+      int DurabilityMin = 0;
+      int IntellegenceMin = 0;
+
+      //Defint maximum values
+      int SpeedMax = 100;
+      int StrengthMax = 100;
+      int DurabilityMax = 100;
+      int IntellegenceMax = 100;
 
       //find characters proficency
       switch (ClassName)
       {
         case "warrior":
           StrengthMod = rand.Next(10, 50);
-          StrengthMin = 60;
+          StrengthMin = 40;
           break;
         case "mage":
           IntellegenceMod = rand.Next(10, 50);
-          IntellegenceMin = 60;
+          IntellegenceMin = 40;
           break;
         case "rogue":
           SpeedMod = rand.Next(10, 50);
-          SpeedMin = 60;
+          SpeedMin = 40;
           break;
         case "sentinel":
           DurabilityMod = rand.Next(10, 50);
-          durabilityMin = 60;
+          DurabilityMin = 40;
           break;
         default:
           await command.RespondAsync("PLEASE ENTER A CLASS");
@@ -242,21 +309,41 @@ namespace bot_boi.utils.StatCommands.Logic
       {
         Name = CharacterName,
         Hp = rand.Next(60, 100),
-        Speed = rand.Next(SpeedMin, 100) + SpeedMod,
-        Strength = rand.Next(StrengthMin, 100) + StrengthMod,
-        Durability = rand.Next(durabilityMin, 100) + DurabilityMod,
-        Intelligence = rand.Next(IntellegenceMin, 100) + IntellegenceMod
+        Speed = rand.Next(SpeedMin, SpeedMax) + SpeedMod,
+        Strength = rand.Next(StrengthMin, StrengthMax) + StrengthMod,
+        Durability = rand.Next(DurabilityMin, DurabilityMax) + DurabilityMod,
+        Intelligence = rand.Next(IntellegenceMin, IntellegenceMax) + IntellegenceMod
       };
-      await command.RespondAsync($"Your new character:\n   Name: [{NewCharacter.Name}]\n   Class: [{ClassName}]\n   HP: [{NewCharacter.Hp}]\n   Speed: [{NewCharacter.Speed}]\n   Durability: [{NewCharacter.Durability}]\n   Intelligence: [{NewCharacter.Intelligence}]\nFor more info do (/stat info)");
+      string respondMessage = $"Your new character:\n   Name: [{NewCharacter.Name}]\n   Class: [{ClassName}]\n   HP: [{NewCharacter.Hp}]\n   Speed: [{NewCharacter.Speed}]\n   Durability: [{NewCharacter.Durability}]\n   Intelligence: [{NewCharacter.Intelligence}]\nFor more info run \"/stat info\"";
 
       if (NewCharacter.Name.ToUpper() == "TEST") { return; }
 
-      await CreateCharacterDB(command, NewCharacter, ClassName);
+      //check if you have allready made a character with the same name
+      List<StatCharacters> dupeName = await GetStatCharacter(NewCharacter.Name.ToUpper());
+      if (dupeName.Count <= 0)
+      {
+        await command.RespondAsync(respondMessage);
+        await CreateCharacterDB(command, NewCharacter, ClassName);
+      }
+      else
+      {
+        StatUsers dupeUser = await GetStatUserFromId(dupeName.First().owner_id);
+        if (dupeUser.user_id == command.User.Id.ToString())
+        {
+          //you allready have a character with the same name
+          await command.RespondAsync($"You allready have a character with the name: \"{NewCharacter.Name}\"");
+        }
+        else
+        {
+          await command.RespondAsync(respondMessage);
+          await CreateCharacterDB(command, NewCharacter, ClassName);
+        }
+      }
     }
 
 
 
-
+    //HELPER METHODS
     private static async Task CreateCharacterDB(SocketSlashCommand command, StatObject character, string className)
     {
       int Db_Id;
@@ -292,7 +379,7 @@ namespace bot_boi.utils.StatCommands.Logic
       VALUES (@OwnerId, @Name, @Hp, @Class, @Speed, @Strength, @Durability, @Intelligence);
       ";
       Console.WriteLine($"[STAT] Created character with name: {character.Name}");
-      var create_character_db_params = new { OwnerId = Db_Id, Name = character.Name, Hp = character.Hp, Class = className, Speed = character.Speed, Strength = character.Strength, Durability = character.Durability, Intelligence = character.Intelligence };
+      var create_character_db_params = new { OwnerId = Db_Id, Name = character.Name.ToUpper(), Hp = character.Hp, Class = className, Speed = character.Speed, Strength = character.Strength, Durability = character.Durability, Intelligence = character.Intelligence };
       await _Connection.ExecuteAsync(create_character_db_query, create_character_db_params);
 
       //for testing
@@ -300,10 +387,9 @@ namespace bot_boi.utils.StatCommands.Logic
       // await PrintAllStatCharacters(connection);
     }
 
-    //HELPER FUNCTIONS
     private static async Task<List<StatUsers>> GetStatUser(SqliteConnection _Connection, string user_id)
     {
-      List<StatUsers> userList = new List<StatUsers>();
+      List<StatUsers> userList = new();
 
       var userQuery = "SELECT * FROM StatUsers WHERE user_id = @UserId";
       var userParams = new { UserId = user_id };
@@ -329,7 +415,7 @@ namespace bot_boi.utils.StatCommands.Logic
       List<StatCharacters> characterList = new List<StatCharacters>();
 
       var characterQuery = "SELECT * FROM StatCharacters WHERE name = @Name";
-      var characterParams = new { Name = name };
+      var characterParams = new { Name = name.ToUpper() };
       var characterResult = await _Connection.QueryAsync<StatCharacters>(characterQuery, characterParams);
 
       foreach (var item in characterResult)
@@ -351,6 +437,7 @@ namespace bot_boi.utils.StatCommands.Logic
         Console.WriteLine($"ID: {user.id}, UserId: {user.user_id}, Username: {user.username}");
       }
     }
+
     private static async Task<List<StatCharacters>> GetAllStatCharacters()
     {
       List<StatCharacters> characterList = new List<StatCharacters>();
