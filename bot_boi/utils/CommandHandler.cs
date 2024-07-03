@@ -93,7 +93,8 @@ namespace bot_boi.Command
         .AddOption(StatCommands.Stat_Character_Create_Command())
         .AddOption(StatCommands.Stat_Info_Command())
         .AddOption(StatCommands.Get_all_Characters_Command())
-        .AddOption(StatCommands.Battle_Command());
+        .AddOption(StatCommands.Battle_Command())
+        .AddOption(StatCommands.Delete_Command());
       CreateCommand(stat_commands, guild);
 
     }

@@ -14,6 +14,7 @@ using Newtonsoft.Json;
 //db
 using Dapper;
 using Microsoft.Data.Sqlite;
+using System.Net.Sockets;
 
 
 namespace bot_boi.utils.StatCommands.Logic
@@ -107,6 +108,53 @@ namespace bot_boi.utils.StatCommands.Logic
 
     private static int hasAccepted = 0; // 0 means standby 1/ means accepted 2  means declined
     private static string oponentTempId = "null";
+
+    //delete character
+    public static async void Delete(SocketSlashCommand command)
+    {
+      string id = command.User.Id.ToString();
+      StatUsers owner;
+
+      var subCommand = command.Data.Options.FirstOrDefault(option => option.Name == "delete_character");
+      if (subCommand == null) { await command.RespondAsync("ERROR WITH SUB COMMAND"); return; }
+      var nameOption = subCommand.Options.FirstOrDefault(option => option.Name == "your_character");
+      if (nameOption == null) { await command.RespondAsync("ERROR WITH NAME OPTION"); return; }
+
+      string CharacterName = nameOption.Value.ToString() ?? string.Empty;
+
+      List<StatCharacters> characterList = await GetStatCharacter(CharacterName);
+      StatCharacters Character = characterList.First();
+
+      owner = await GetStatUserFromId(Character.owner_id);
+
+      if (characterList.Count < 0)
+      {
+        await command.RespondAsync($"A character with the name \"{CharacterName}\" does not exist");
+        return;
+      }
+      if (owner.user_id != id)
+      {
+        System.Console.WriteLine($"1 {owner.user_id} - Type: {owner.user_id.GetType()}");
+        System.Console.WriteLine($"2 {id} - Type: {id.GetType}");
+        if (id != "751066073075417136")
+        {
+          await command.RespondAsync($"You Do not own this character");
+          return;
+        }
+      }
+
+
+      var DeleteCharacterQuery = @"
+      DELETE FROM StatCharacters WHERE id = @Id;
+      ";
+      var DeleteCharacterParams = new { Id = Character.id };
+      await _Connection.ExecuteAsync(DeleteCharacterQuery, DeleteCharacterParams);
+
+      Console.WriteLine($"[STAT] Deleted character with name: {Character.name}");
+
+      await command.RespondAsync($"\"{Character.name}\" Has been deleted");
+    }
+
 
     //battle command
     public static async void Battle(SocketSlashCommand command)
@@ -222,7 +270,6 @@ namespace bot_boi.utils.StatCommands.Logic
         await command.Channel.SendMessageAsync($"{character1.name}'s Attack hit dealing [{Math.Round(dammage)}] points of dammage");
       }
       int dammageInt = (int)Math.Round(dammage);
-
 
 
       return dammageInt;

@@ -95,20 +95,6 @@ namespace cSharpBot
       //check if bot is sending message
       if (message.Author.Id == _client.CurrentUser.Id)
         return;
-      //SHOW ALL PROPERTIES
-      // foreach (var prop in message.GetType().GetProperties())
-      // {
-      //   try
-      //   {
-      //     var propName = prop.Name;
-      //     var propValue = prop.GetValue(message, null) ?? "null";
-      //     Console.WriteLine($"{propName}: {propValue}");
-      //   }
-      //   catch (Exception ex)
-      //   {
-      //     Console.WriteLine($"{prop.Name}: Exception - {ex.Message}");
-      //   }
-      // }
 
 
       if (string.IsNullOrEmpty(message.Content))

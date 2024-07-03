@@ -18,6 +18,14 @@ namespace bot_boi.utils.StatCommands.Commands
 {
   public class StatCommands
   {
+    public static SlashCommandOptionBuilder Delete_Command()
+    {
+      return new SlashCommandOptionBuilder()
+        .WithName("delete_character")
+        .WithDescription("deletes one of your stat character")
+        .WithType(ApplicationCommandOptionType.SubCommand)
+        .AddOption("your_character", ApplicationCommandOptionType.String, "your characters name", isRequired: true);
+    }
     public static SlashCommandOptionBuilder Battle_Command()
     {
       return new SlashCommandOptionBuilder()
@@ -87,7 +95,10 @@ namespace bot_boi.utils.StatCommands.Commands
             case "get_all_characters":
               StatCommandLogic.GetAllCharacters(command);
               break;
-            case "battle":
+            case "delete_character":
+              StatCommandLogic.Delete(command);
+              break;
+            case "delete":
               StatCommandLogic.Battle(command);
               break;
             default:
