@@ -140,6 +140,7 @@ namespace bot_boi.utils.StatCommands.Logic
       oponentTempId = oponent_user.user_id;
 
       // await command.DeferAsync();
+      int count = 0;
 
       while (true)
       {
@@ -151,25 +152,91 @@ namespace bot_boi.utils.StatCommands.Logic
           }
           else
           {
-            await command.RespondAsync($"{oponent_user.username} has declined");
+            await command.Channel.SendMessageAsync($"{oponent_user.username} has declined");
             return;
           }
         }
         await Task.Delay(2000);
+        if (count >= 300) { await command.Channel.SendMessageAsync("Battle Request expired"); return; }
       }
       hasAccepted = 0;
-      //acepted battle here
       await command.Channel.SendMessageAsync($"{oponent_user.username} has accepted!");
+
+      //BATTLE LOGIC HERE
+
+      while (true)
+      {
+        int dammage1 = await CalculateDammage(character1, character2, command);
+        character2.hp -= dammage1;
+        if (character2.hp <= 0)
+        {
+          await command.Channel.SendMessageAsync($"{character1.name} Wins!");
+          break;
+        }
+
+        await Task.Delay(700);
+
+        int dammage2 = await CalculateDammage(character2, character1, command);
+        character1.hp -= dammage2;
+        if (character1.hp <= 0)
+        {
+          await command.Channel.SendMessageAsync($"{character2.name} Wins");
+          break;
+        }
+
+        await Task.Delay(700);
+      }
     }
+
+    private static async Task<int> CalculateDammage(StatCharacters character1, StatCharacters character2, SocketSlashCommand command)
+    {
+      Random rand = new();
+      int CritChance = 10;//crit times attacks by 1.2
+      float MissChanceP1 = character2.speed;// from 0 - 150
+
+      double dammage = character1.strength * 0.2f;
+
+      MissChanceP1 = (float)MissChanceP1 / 150f;
+      float miss = MissChanceP1 * 100;
+
+      dammage *= 0.5 + (character1.durability / 150);
+
+
+      //randomize slightly
+      float randomPercent = 0.4f;
+      dammage *= 1 + (rand.NextDouble() * 2 * randomPercent) - randomPercent;
+
+
+      if (rand.Next(1, (int)miss) == 1)
+      {
+        dammage = 0;
+        await command.Channel.SendMessageAsync($"{character1.name}'s Attack missed");
+      }
+      else if (rand.Next(1, CritChance) == 1)
+      {
+        dammage *= 2;
+        await command.Channel.SendMessageAsync($"{character1.name}'s Attack Crit! 2x dammage [{Math.Round(dammage)}] points of dammage");
+      }
+      else
+      {
+        await command.Channel.SendMessageAsync($"{character1.name}'s Attack hit dealing [{Math.Round(dammage)}] points of dammage");
+      }
+      int dammageInt = (int)Math.Round(dammage);
+
+
+
+      return dammageInt;
+    }
+
 
     public static void BattleAccept(SocketMessage message)
     {
-      if (message.Content == "!accept" && message.Author.Id.ToString() == oponentTempId)
+      if (message.Content.ToUpper() == "!ACCEPT" && message.Author.Id.ToString() == oponentTempId)
       {
         hasAccepted = 1;
         oponentTempId = "null";
       }
-      else if (message.Content == "!decline" && message.Author.Id.ToString() == oponentTempId)
+      else if (message.Content.ToUpper() == "!DECLINE" && message.Author.Id.ToString() == oponentTempId)
       {
         hasAccepted = 2;
         oponentTempId = "null";
@@ -185,7 +252,7 @@ namespace bot_boi.utils.StatCommands.Logic
       foreach (var item in characterList)
       {
         tempName = await GetStatUserFromId(item.owner_id);
-        message += $"   Name: [{item.name}] Owner: [{tempName.username}]\n";
+        message += $"   Name: [{item.name}] Class: [{item.character_class}] Owner: [{tempName.username}]\n";
       }
       await command.RespondAsync(message);
     }
@@ -195,7 +262,7 @@ namespace bot_boi.utils.StatCommands.Logic
     //INFO COMMAND
     public static async void Info(SocketSlashCommand command)
     {
-      string message = "To create a new character do (/stat create_character <character name> <character class>\nCharacters classes are what give it different stats eg:\n  Warrior: Strength\n  Mage: Intellegence\n  Rouge : Speed\n  Sentinel: Durability\n\n To Battle your characters do (/stat battle <character name> <enemy name>))";
+      string message = "To create a new character do (/stat create_character <character name> <character class>\nCharacters classes are what give it different stats eg:\n  Warrior: Strength\n  Mage: Intellegence(increeses the likelyhood of geting a crit)\n  Rouge : Speed\n  Sentinel: Durability\n\n To Battle your characters do (/stat battle <character name> <enemy name>))";
 
       var subCommand = command.Data.Options.FirstOrDefault();
       if (subCommand == null) { await command.RespondAsync("ERROR WITH SUB COMMAND"); return; }
@@ -314,7 +381,7 @@ namespace bot_boi.utils.StatCommands.Logic
         Durability = rand.Next(DurabilityMin, DurabilityMax) + DurabilityMod,
         Intelligence = rand.Next(IntellegenceMin, IntellegenceMax) + IntellegenceMod
       };
-      string respondMessage = $"Your new character:\n   Name: [{NewCharacter.Name}]\n   Class: [{ClassName}]\n   HP: [{NewCharacter.Hp}]\n   Speed: [{NewCharacter.Speed}]\n   Durability: [{NewCharacter.Durability}]\n   Intelligence: [{NewCharacter.Intelligence}]\nFor more info run \"/stat info\"";
+      string respondMessage = $"Your new character:\n   Name: [{NewCharacter.Name}]\n   Class: [{ClassName}]\n   HP: [{NewCharacter.Hp}]\n   Strength: [{NewCharacter.Strength}]\n   Speed: [{NewCharacter.Speed}]\n   Durability: [{NewCharacter.Durability}]\n   Intelligence: [{NewCharacter.Intelligence}]\nFor more info run \"/stat info\"";
 
       if (NewCharacter.Name.ToUpper() == "TEST") { return; }
 
