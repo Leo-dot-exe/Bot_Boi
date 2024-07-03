@@ -428,7 +428,6 @@ namespace bot_boi.utils.StatCommands.Logic
         Durability = rand.Next(DurabilityMin, DurabilityMax) + DurabilityMod,
         Intelligence = rand.Next(IntellegenceMin, IntellegenceMax) + IntellegenceMod
       };
-      string respondMessage = $"Your new character:\n   Name: [{NewCharacter.Name}]\n   Class: [{ClassName}]\n   HP: [{NewCharacter.Hp}]\n   Strength: [{NewCharacter.Strength}]\n   Speed: [{NewCharacter.Speed}]\n   Durability: [{NewCharacter.Durability}]\n   Intelligence: [{NewCharacter.Intelligence}]\nFor more info run \"/stat info\"";
 
       if (NewCharacter.Name.ToUpper() == "TEST") { return; }
 
@@ -436,7 +435,6 @@ namespace bot_boi.utils.StatCommands.Logic
       List<StatCharacters> dupeName = await GetStatCharacter(NewCharacter.Name.ToUpper());
       if (dupeName.Count <= 0)
       {
-        await command.RespondAsync(respondMessage);
         await CreateCharacterDB(command, NewCharacter, ClassName);
       }
       else
@@ -449,7 +447,6 @@ namespace bot_boi.utils.StatCommands.Logic
         }
         else
         {
-          await command.RespondAsync(respondMessage);
           await CreateCharacterDB(command, NewCharacter, ClassName);
         }
       }
@@ -486,6 +483,16 @@ namespace bot_boi.utils.StatCommands.Logic
         Db_Id = Id_Check_Results.First().id;
       }
 
+      //check if user has more than 5 characters  
+      List<StatCharacters> characters = await GetStatCharacterFromUser(Db_Id);
+
+      if (characters.Count > 5)
+      {
+        await command.RespondAsync($"You have too many characters use (/delete_character) to delete one of your characters");
+        return;
+      }
+
+      await command.RespondAsync($"Your new character:\n   Name: [{character.Name}]\n   Class: [{className}]\n   HP: [{character.Hp}]\n   Strength: [{character.Strength}]\n   Speed: [{character.Speed}]\n   Durability: [{character.Durability}]\n   Intelligence: [{character.Intelligence}]\nFor more info run \"/stat info\"");
 
       // make new character in db
       var create_character_db_query = @"
@@ -530,6 +537,21 @@ namespace bot_boi.utils.StatCommands.Logic
 
       var characterQuery = "SELECT * FROM StatCharacters WHERE name = @Name";
       var characterParams = new { Name = name.ToUpper() };
+      var characterResult = await _Connection.QueryAsync<StatCharacters>(characterQuery, characterParams);
+
+      foreach (var item in characterResult)
+      {
+        characterList.Add(item);
+      }
+      return characterList;
+    }
+
+    private static async Task<List<StatCharacters>> GetStatCharacterFromUser(int userId)
+    {
+      List<StatCharacters> characterList = new();
+
+      var characterQuery = "SELECT * FROM StatCharacters WHERE id = @Id";
+      var characterParams = new { Id = userId };
       var characterResult = await _Connection.QueryAsync<StatCharacters>(characterQuery, characterParams);
 
       foreach (var item in characterResult)
