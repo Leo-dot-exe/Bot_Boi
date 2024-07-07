@@ -239,7 +239,7 @@ namespace bot_boi.utils.StatCommands.Logic
     private static async Task<int> CalculateDammage(StatCharacters character1, StatCharacters character2, SocketSlashCommand command)
     {
       Random rand = new();
-      int CritChance = 10;//crit times attacks by 1.2
+      int CritChance = (1000 / character1.intelligence);//crit times attacks by 1.2
       float MissChanceP1 = character2.speed;// from 0 - 150
 
       double dammage = character1.strength * 0.2f;
@@ -247,9 +247,9 @@ namespace bot_boi.utils.StatCommands.Logic
       MissChanceP1 = (float)MissChanceP1 / 150f;
       float miss = MissChanceP1 * 100;
 
-      dammage *= 0.5 + (character1.durability / 150);
+      dammage *= (150 / character1.durability);
 
-
+ 
       //randomize slightly
       float randomPercent = 0.4f;
       dammage *= 1 + (rand.NextDouble() * 2 * randomPercent) - randomPercent;
