@@ -10,7 +10,3 @@ Bot is writen in c#
   "TOKEN": "<DISCORD_BOT_TOKEN>",
   "SERVER_ID": "<DISCORD_SERVER_ID>"
 }
-
-//TODO:
-  add stat battle command
-  

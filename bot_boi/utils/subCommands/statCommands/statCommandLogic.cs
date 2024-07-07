@@ -57,7 +57,7 @@ namespace bot_boi.utils.StatCommands.Logic
 
   public class StatCommandLogic
   {
-    private const string DbPath = "Stat.db";
+    private const string DbPath = "./Stat.db";
 
     private static SqliteConnection _Connection;
 
