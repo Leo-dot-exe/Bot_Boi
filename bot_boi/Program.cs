@@ -13,7 +13,7 @@ using System.IO;
 using Newtonsoft.Json;
 
 using bot_boi.Command;
-using bot_boi.utils.StatCommands.Logic;
+using bot_boi.utils.StatCommands.Handler;
 
 namespace cSharpBot
 {
@@ -136,7 +136,7 @@ namespace cSharpBot
 
 
       //swear checking
-      string jsonSwearFile = File.ReadAllText("/json/DirtyWords.json");//or "./bin/Debug/net8.0/json/DirtyWords.json"
+      string jsonSwearFile = File.ReadAllText(path: Directory.GetCurrentDirectory() + "/json/DirtyWords.json");
       SwearJson swears = JsonConvert.DeserializeObject<SwearJson>(jsonSwearFile);
       if (Array.Exists(swears.WORDS, element => element == message.Content))
       {

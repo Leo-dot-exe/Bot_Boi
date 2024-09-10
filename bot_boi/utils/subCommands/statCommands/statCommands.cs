@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Threading;
 using Newtonsoft.Json;
 
-using bot_boi.utils.StatCommands.Logic;
+using bot_boi.utils.StatCommands.Handler;
 
 namespace bot_boi.utils.StatCommands.Commands
 {
@@ -80,31 +80,31 @@ namespace bot_boi.utils.StatCommands.Commands
       }
       public async void StatCommands(SocketSlashCommand command)
       {
+        string name = command.Data.Options.First().Name;
+        // find sub command
+        switch (name)
         {
-          string name = command.Data.Options.First().Name;
-
-          // find sub command
-          switch (name)
-          {
-            case "create_character":
-              StatCommandLogic.CreateCharacter(command);
-              break;
-            case "info":
-              StatCommandLogic.Info(command);
-              break;
-            case "get_all_characters":
-              StatCommandLogic.GetAllCharacters(command);
-              break;
-            case "delete_character":
-              StatCommandLogic.Delete(command);
-              break;
-            case "delete":
-              StatCommandLogic.Battle(command);
-              break;
-            default:
-              await command.RespondAsync("This Stat Command is in development sorry");
-              break;
-          }
+          case "create_character":
+            StatCommandLogic.CreateCharacter(command);
+            break;
+          case "info":
+            StatCommandLogic.Info(command);
+            break;
+          case "get_all_characters":
+            StatCommandLogic.GetAllCharacters(command);
+            break;
+          case "delete_character":
+            StatCommandLogic.Delete(command);
+            break;
+          case "delete":
+            StatCommandLogic.Battle(command);
+            break;
+          case "battle":
+            StatCommandLogic.Battle(command);
+            break;
+          default:
+            await command.RespondAsync("This Stat Command is in development sorry");
+            break;
         }
       }
     }

@@ -27,9 +27,7 @@ namespace bot_boi.InteractionsHandler
         .SetBasePath(AppContext.BaseDirectory)
       .AddJsonFile(path: Directory.GetCurrentDirectory() + "/json/config.json");
       _config = _builder.Build();
-
     }
-
 
 
     public async void Rolls(SocketSlashCommand command)

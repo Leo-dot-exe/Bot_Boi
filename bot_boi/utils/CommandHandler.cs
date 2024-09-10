@@ -15,6 +15,7 @@ using bot_boi.InteractionsHandler;
 using bot_boi.utils.SubCommands;
 using bot_boi.utils.StatCommands.Commands;
 using static bot_boi.utils.StatCommands.Commands.StatCommands;
+using bot_boi.utils.subCommands.SFServer;
 
 namespace bot_boi.Command
 {
@@ -28,6 +29,7 @@ namespace bot_boi.Command
     //sub command handlers
     private readonly ModCommandsHandler _ModCommandInteractions;
     private readonly StatCommandHandler _StatCommandInteractions;
+    private readonly SFServerCommandHandler _SFServerCommandInteractions;
 
     public CommandHandler(DiscordSocketClient client, CommandService commands)
     {
@@ -43,6 +45,7 @@ namespace bot_boi.Command
       //different sub command handlers
       _ModCommandInteractions = new ModCommandsHandler(_client, _commands);
       _StatCommandInteractions = new StatCommandHandler(_client, _commands);
+      _SFServerCommandInteractions = new SFServerCommandHandler(_client, _commands);
     }
 
     public async Task MainAsync()
@@ -97,6 +100,12 @@ namespace bot_boi.Command
         .AddOption(StatCommands.Delete_Command());
       CreateCommand(stat_commands, guild);
 
+      var sfserver_commands = new SlashCommandBuilder()
+        .WithName("satisfactory")
+        .WithDescription("Commands for the Satisfactory Server!")
+        .AddOption(SFServerCommandBuilder.Start_Server_Command())
+        .AddOption(SFServerCommandBuilder.Stop_Server_Command());
+      CreateCommand(sfserver_commands, guild);
     }
 
     private async static void CreateCommand(SlashCommandBuilder command, SocketGuild guild)
@@ -125,6 +134,9 @@ namespace bot_boi.Command
         case "stat":
           _StatCommandInteractions.StatCommands(command);
           break;
+        case "satisfactory":
+          _SFServerCommandInteractions.SFServerCommands(command);
+          break;
         case "temp":
           _commandInteractions.Temp(command);
           break;
@@ -133,7 +145,6 @@ namespace bot_boi.Command
           break;
       }
     }
-
 
     private void ClearCommands(SocketGuild guild)
     {
