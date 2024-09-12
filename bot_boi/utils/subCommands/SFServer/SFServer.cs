@@ -1,16 +1,7 @@
-using System;
 using Discord;
-using Discord.Net;
 using Discord.Commands;
-using Discord.Interactions;
-using Discord.Commands.Builders;
 using Discord.WebSocket;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Json;
-using Microsoft.Extensions.DependencyInjection;
-using System.Threading;
-using Newtonsoft.Json;
+using System.Diagnostics;
 
 namespace bot_boi.utils.subCommands.SFServer;
 
@@ -30,7 +21,15 @@ public class SFServerCommandBuilder
       .WithDescription("Stop the Satisfactory server.")
       .WithType(ApplicationCommandOptionType.SubCommand);
   }
+  public static SlashCommandOptionBuilder Server_Status_Command()
+  {
+    return new SlashCommandOptionBuilder()
+      .WithName("server_status")
+      .WithDescription("Check the status of the satisfactory server!")
+      .WithType(ApplicationCommandOptionType.SubCommand);
+  }
 }
+
 
 public class SFServerCommandHandler
 {
@@ -53,6 +52,12 @@ public class SFServerCommandHandler
       case "start_server":
         _Logic.StartServer(command);
         break;
+      case "stop_server":
+        _Logic.StopServer(command);
+        break;
+      case "server_status":
+        _Logic.ServerStatus(command);
+        break;
       default:
         await command.RespondAsync("This Stat Command is in development sorry");
         break;
@@ -63,9 +68,75 @@ public class SFServerCommandHandler
 
 public class SFServerLogic
 {
+  private readonly string ServerStartBatchFilePath = "C:/Users/leott/Desktop/SatisfactoryDedicatedServer/StartServer.bat";
+  private readonly string ServerStopBatchFilePath = "C:/Users/leott/Desktop/SatisfactoryDedicatedServer/StopServer.bat";
   public bool StartServer(SocketSlashCommand command)
   {
-    Console.WriteLine("START SERVER TEMP");
+    if (IsServerRunning())
+    {
+      command.RespondAsync("Server allready running");
+      return false;
+    }
+    try
+    {
+      string paramiters = $"/k \"{ServerStartBatchFilePath}\"";
+      Process.Start("cmd", paramiters);
+    }
+    catch
+    {
+      Console.WriteLine("ERROR WITH SERVER!!");
+      command.RespondAsync("Somthing went wrong! (idk what)");
+      return false;
+    }
+
+    command.RespondAsync("Server started successfuly!");
     return true;
+  }
+
+  public bool StopServer(SocketSlashCommand command)
+  {
+    if (!IsServerRunning())
+    {
+      command.RespondAsync("Server allready stopped");
+      return true;
+    }
+
+    try
+    {
+      string paramiters = $"/k \"{ServerStopBatchFilePath}\"";
+      Process.Start("cmd", paramiters);
+    }
+    catch
+    {
+      Console.WriteLine("ERROR WITH SERVER!!");
+      command.RespondAsync("Somthing went wrong! (idk what)");
+      return false;
+    }
+
+    command.RespondAsync("Server stopped successfuly!");
+    return true;
+  }
+
+  public bool ServerStatus(SocketSlashCommand command)
+  {
+    if (IsServerRunning())
+      command.RespondAsync(":green_circle: Server Running");
+    else
+      command.RespondAsync(":red_circle: Server off");
+
+    return true;
+  }
+
+  private bool IsServerRunning()
+  {
+    Process[] pname = Process.GetProcessesByName("FactoryServer-Win64-Shipping-Cmd");
+    if (pname.Length > 0)
+    {
+      return true;
+    }
+    else
+    {
+      return false;
+    }
   }
 }

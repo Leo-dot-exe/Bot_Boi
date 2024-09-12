@@ -104,7 +104,8 @@ namespace bot_boi.Command
         .WithName("satisfactory")
         .WithDescription("Commands for the Satisfactory Server!")
         .AddOption(SFServerCommandBuilder.Start_Server_Command())
-        .AddOption(SFServerCommandBuilder.Stop_Server_Command());
+        .AddOption(SFServerCommandBuilder.Stop_Server_Command())
+        .AddOption(SFServerCommandBuilder.Server_Status_Command());
       CreateCommand(sfserver_commands, guild);
     }
 
