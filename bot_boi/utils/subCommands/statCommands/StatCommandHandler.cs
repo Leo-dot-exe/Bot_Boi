@@ -57,9 +57,14 @@ namespace bot_boi.utils.StatCommands.Handler
 
   public class StatCommandLogic
   {
-    private const string DbPath = "./Stat.db";
+    private static string DbPath;
 
     private static SqliteConnection _Connection;
+
+    public StatCommandLogic()
+    {
+      DbPath = Directory.GetCurrentDirectory() + "/Stat.db";
+    }
 
     public static async Task InitializeAsync()
     {

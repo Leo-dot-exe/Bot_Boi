@@ -25,7 +25,7 @@ namespace bot_boi.InteractionsHandler
       _client = client;
       var _builder = new ConfigurationBuilder()
         .SetBasePath(AppContext.BaseDirectory)
-      .AddJsonFile(path: Directory.GetCurrentDirectory() + "/json/config.json");
+      .AddJsonFile(path: Directory.GetCurrentDirectory() + "/data/json/config.json");
       _config = _builder.Build();
     }
 
