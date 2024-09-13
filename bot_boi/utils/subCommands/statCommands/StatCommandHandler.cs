@@ -1,15 +1,4 @@
-﻿using System;
-using Discord;
-using Discord.Net;
-using Discord.Commands;
-using Discord.Interactions;
-using Discord.WebSocket;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Json;
-using Microsoft.Extensions.DependencyInjection;
-using System.Threading;
-using Newtonsoft.Json;
+﻿using Discord.WebSocket;
 
 //db
 using Dapper;
@@ -63,7 +52,7 @@ namespace bot_boi.utils.StatCommands.Handler
 
     public StatCommandLogic()
     {
-      DbPath = Directory.GetCurrentDirectory() + "/Stat.db";
+      DbPath = Directory.GetCurrentDirectory() + "/data/Stat.db";
     }
 
     public static async Task InitializeAsync()

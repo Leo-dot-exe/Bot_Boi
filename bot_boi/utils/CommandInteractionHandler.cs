@@ -1,15 +1,7 @@
-﻿using System;
-using Discord;
-using Discord.Net;
+﻿using Discord;
 using Discord.Commands;
-using Discord.Interactions;
 using Discord.WebSocket;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Json;
-using Microsoft.Extensions.DependencyInjection;
-using System.Threading;
-using Newtonsoft.Json;
 
 namespace bot_boi.InteractionsHandler
 {
