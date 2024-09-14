@@ -44,10 +44,10 @@ namespace cSharpBot
 
       Console.WriteLine(Directory.GetCurrentDirectory() + "data/json/config.json");
       string path = Directory.GetCurrentDirectory() + "data/json/config.json";
-      if (path[path.Length - 21] != '/')
-      {
-        path.Insert(path[path.Length - 21], "/");
-      }
+      // if (path[path.Length - 21] != '/')
+      // {
+      //   path.Insert(path[path.Length - 21], "/");
+      // }
       Console.WriteLine("FULL PATHEHIHFOUIEHI" + path);
       Console.WriteLine("WHY U NO WORK" + path[path.Length - 21]);
 
