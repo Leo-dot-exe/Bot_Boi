@@ -50,7 +50,7 @@ namespace cSharpBot
 
       var _builder = new ConfigurationBuilder()
         .SetBasePath(AppContext.BaseDirectory)
-        .AddJsonFile(path: Directory.GetCurrentDirectory() + "data/json/config.json");
+        .AddJsonFile(path: Directory.GetCurrentDirectory() + "/data/json/config.json");
       _config = _builder.Build();
 
       _commands = new CommandService();
