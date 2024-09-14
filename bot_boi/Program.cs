@@ -42,12 +42,9 @@ namespace cSharpBot
       _client.Ready += Ready; //Hook into the client ready event
       _client.MessageReceived += MessageReceivedAsync; //Hook into message received event
 
-      Console.WriteLine(Directory.GetCurrentDirectory() + "data/json/config.json");
-      string path = Directory.GetCurrentDirectory() + "data/json/config.json";
-      // if (path[path.Length - 21] != '/')
-      // {
-      //   path.Insert(path[path.Length - 21], "/");
-      // }
+      Console.WriteLine(Directory.GetCurrentDirectory() + "/data/json/config.json");
+      string path = Directory.GetCurrentDirectory() + "/data/json/config.json";
+
       Console.WriteLine("FULL PATHEHIHFOUIEHI" + path);
       Console.WriteLine("WHY U NO WORK" + path[path.Length - 21]);
 
