@@ -52,7 +52,7 @@ namespace bot_boi.utils.StatCommands.Handler
 
     public StatCommandLogic()
     {
-      DbPath = Directory.GetCurrentDirectory() + "/data/Stat.db";
+      DbPath = "./data/Stat.db";
     }
 
     public static async Task InitializeAsync()

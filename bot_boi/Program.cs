@@ -42,15 +42,15 @@ namespace cSharpBot
       _client.Ready += Ready; //Hook into the client ready event
       _client.MessageReceived += MessageReceivedAsync; //Hook into message received event
 
-      Console.WriteLine(Directory.GetCurrentDirectory() + "/data/json/config.json");
-      string path = Directory.GetCurrentDirectory() + "/data/json/config.json";
+      Console.WriteLine("./data/json/config.json");
+      string path = "./data/json/config.json";
 
       Console.WriteLine("FULL PATHEHIHFOUIEHI" + path);
       Console.WriteLine("WHY U NO WORK" + path[path.Length - 21]);
 
       var _builder = new ConfigurationBuilder()
         .SetBasePath(AppContext.BaseDirectory)
-        .AddJsonFile(path: Directory.GetCurrentDirectory() + "/data/json/config.json");
+        .AddJsonFile(path: "./data/json/config.json");
       _config = _builder.Build();
 
       _commands = new CommandService();
@@ -132,7 +132,7 @@ namespace cSharpBot
 
 
       //swear checking
-      string jsonSwearFile = File.ReadAllText(path: Directory.GetCurrentDirectory() + "/data/json/DirtyWords.json");
+      string jsonSwearFile = File.ReadAllText(path: "./data/json/DirtyWords.json");
       SwearJson swears = JsonConvert.DeserializeObject<SwearJson>(jsonSwearFile);
       if (Array.Exists(swears.WORDS, element => element == message.Content))
       {
