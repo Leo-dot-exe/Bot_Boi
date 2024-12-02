@@ -10,6 +10,8 @@ using bot_boi.utils.SubCommands;
 using bot_boi.utils.StatCommands.Commands;
 using static bot_boi.utils.StatCommands.Commands.StatCommands;
 using bot_boi.utils.subCommands.SFServer;
+using bot_boi.utils.subCommands.TheProgramCommands;
+using bot_boi.utils.subCommands.Music_Boi;
 
 namespace bot_boi.Command
 {
@@ -24,6 +26,8 @@ namespace bot_boi.Command
     private readonly ModCommandsHandler _ModCommandInteractions;
     private readonly StatCommandHandler _StatCommandInteractions;
     private readonly SFServerCommandHandler _SFServerCommandInteractions;
+    private readonly TheProgramCommandHandler _TheProgramCommandInteractions;
+    private readonly Music_Boi_CommandHandler _Music_Boi_CommandInteractions;
 
     public CommandHandler(DiscordSocketClient client, CommandService commands)
     {
@@ -40,6 +44,8 @@ namespace bot_boi.Command
       _ModCommandInteractions = new ModCommandsHandler(_client, _commands);
       _StatCommandInteractions = new StatCommandHandler(_client, _commands);
       _SFServerCommandInteractions = new SFServerCommandHandler(_client, _commands);
+      _TheProgramCommandInteractions = new TheProgramCommandHandler(_client, _commands);
+      _Music_Boi_CommandInteractions = new Music_Boi_CommandHandler(_client, _commands);
     }
 
     public async Task MainAsync()
@@ -101,6 +107,23 @@ namespace bot_boi.Command
         .AddOption(SFServerCommandBuilder.Stop_Server_Command())
         .AddOption(SFServerCommandBuilder.Server_Status_Command());
       CreateCommand(sfserver_commands, guild);
+
+      var TheProgram_commands = new SlashCommandBuilder()
+        .WithName("the-program")
+        .WithDescription("Dicord version of the program")
+        .AddOption(TheProgramCommandBuilder.Website_Status_Command())
+        .AddOption(TheProgramCommandBuilder.Start_F_MK3())
+        .AddOption(TheProgramCommandBuilder.Start_M_MK2())
+        .AddOption(TheProgramCommandBuilder.Check_Result());
+      CreateCommand(TheProgram_commands, guild);
+
+      var Music_Boi_Commands = new SlashCommandBuilder()
+        .WithName("music_boi")
+        .WithDescription("Play music through youtube onto discord")
+        .AddOption(Music_Boi_CommandBuilder.Play_Command())
+        .AddOption(Music_Boi_CommandBuilder.Disconect_Command())
+        .AddOption(Music_Boi_CommandBuilder.Pause_Command());
+      CreateCommand(Music_Boi_Commands, guild);
     }
 
     private async static void CreateCommand(SlashCommandBuilder command, SocketGuild guild)
@@ -132,8 +155,11 @@ namespace bot_boi.Command
         case "satisfactory":
           _SFServerCommandInteractions.SFServerCommands(command);
           break;
-        case "temp":
-          _commandInteractions.Temp(command);
+        case "the-program":
+          _TheProgramCommandInteractions.TheProgramCommands(command);
+          break;
+        case "music_boi":
+          _Music_Boi_CommandInteractions.Music_Boi_Commands(command);
           break;
         default:
           await command.RespondAsync("This Command is in development sorry");

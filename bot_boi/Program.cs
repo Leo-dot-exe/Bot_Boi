@@ -42,12 +42,6 @@ namespace cSharpBot
       _client.Ready += Ready; //Hook into the client ready event
       _client.MessageReceived += MessageReceivedAsync; //Hook into message received event
 
-      Console.WriteLine("./data/json/config.json");
-      string path = "./data/json/config.json";
-
-      Console.WriteLine("FULL PATHEHIHFOUIEHI" + path);
-      Console.WriteLine("WHY U NO WORK" + path[path.Length - 21]);
-
       var _builder = new ConfigurationBuilder()
         .SetBasePath(AppContext.BaseDirectory)
         .AddJsonFile(path: "./data/json/config.json");
