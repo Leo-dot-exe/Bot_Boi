@@ -30,8 +30,8 @@ public class Music_Boi_CommandBuilder
   public static SlashCommandOptionBuilder Pause_Command()
   {
     return new SlashCommandOptionBuilder()
-      .WithName("pause")
-      .WithDescription("pauses the current plaing audio")
+      .WithName("toggle pause")
+      .WithDescription("pauses / plays the current audio")
       .WithType(ApplicationCommandOptionType.SubCommand);
   }
   public static SlashCommandOptionBuilder Skip_Command()
@@ -65,7 +65,10 @@ public class Music_Boi_CommandHandler
         _Logic.play(command, _Client);
         break;
       case "disconect":
-        _Logic.disconect(command);
+        _Logic.Disconect(command);
+        break;
+      case "pause":
+        _Logic.Pause(command);
         break;
     }
   }
@@ -73,8 +76,16 @@ public class Music_Boi_CommandHandler
 
 public class Music_BoiLogic
 {
+  private enum PlaybackState
+  {
+    Playing,
+    Paused,
+    Stopped
+  }
+  private PlaybackState CurrentPlaybackState = PlaybackState.Stopped;
+  private ManualResetEventSlim PauseEvent = new ManualResetEventSlim(true);
+
   private ConcurrentQueue<string> SongQueue = new ConcurrentQueue<string>();
-  private bool IsPlaying = false;
   private IAudioClient? AudioCLient = null;
 
   public async void play(SocketSlashCommand command, DiscordSocketClient client)
@@ -145,7 +156,7 @@ public class Music_BoiLogic
       }
       // await SendAsyncAudio(this.AudioCLient!, "C:/Users/leott/Documents/bot_boi/bot_boi/data/file_example_MP3_1MG.mp3"); TODO
       SongQueue.Enqueue(url);
-      if (!IsPlaying)
+      if (CurrentPlaybackState == PlaybackState.Stopped)
       {
         await AddToQueue(AudioCLient!);
       }
@@ -157,8 +168,6 @@ public class Music_BoiLogic
     }
   }
 
-
-  //HELPER METHODS
 
   private async Task EnsureAudioClientReadyAsync(TimeSpan timeout)
   {
@@ -187,21 +196,6 @@ public class Music_BoiLogic
     return;
   }
 
-
-  private async Task SendAsyncAudio(IAudioClient client, string path)
-  {
-    var ffmpeg = CreateStream(path);
-    ffmpeg.Start();
-    IsPlaying = true;
-
-    var output = ffmpeg.StandardOutput.BaseStream;
-    var discord = client.CreatePCMStream(AudioApplication.Mixed);
-
-    try { await output.CopyToAsync(discord); }
-    finally { await discord.FlushAsync(); }
-  }
-
-
   private async Task AddToQueue(IAudioClient client)
   {
     while (true)
@@ -210,22 +204,34 @@ public class Music_BoiLogic
       if (!SongQueue.TryDequeue(out string? currentSong))
       {
         Console.WriteLine("Queue is empty. Stopping playback.");
-        IsPlaying = false;
+        CurrentPlaybackState = PlaybackState.Stopped;
         break; // Exit the loop if the queue is empty
       }
 
       var ffmpeg = CreateStream("C:/Users/leott/Documents/bot_boi/bot_boi/data/file_example_MP3_1MG.mp3"); //CHANGE TO CURRENT SONG
       ffmpeg.Start();
 
-      IsPlaying = true; // Mark as playing
+      CurrentPlaybackState = PlaybackState.Playing;
+
       var output = ffmpeg.StandardOutput.BaseStream;
       var discord = client.CreatePCMStream(AudioApplication.Mixed);
 
       try
       {
-        // Copy ffmpeg output to Discord's audio stream
         Console.WriteLine("Playing");
-        await output.CopyToAsync(discord);
+        // await output.CopyToAsync(discord);
+
+        while (true)
+        {
+          PauseEvent.Wait(); //wait if paused
+          byte[] buffer = new byte[3840];
+          int bytedRead = await output.ReadAsync(buffer, 0, buffer.Length);
+
+          if (bytedRead == 0)
+            break;
+
+          await discord.WriteAsync(buffer, 0, bytedRead);
+        }
       }
       catch (Exception e)
       {
@@ -236,11 +242,11 @@ public class Music_BoiLogic
         await discord.FlushAsync(); // Wait for the buffer to clear
         ffmpeg.Dispose();
         discord.Dispose();
-        Console.WriteLine($"Finished playing: {currentSong}");
+        Console.WriteLine("Finished playing");
       }
     }
 
-    IsPlaying = false; // Mark as not playing when loop ends
+    CurrentPlaybackState = PlaybackState.Stopped;
   }
 
   private Process CreateStream(string path)
@@ -251,32 +257,48 @@ public class Music_BoiLogic
       StartInfo = new ProcessStartInfo
       {
         FileName = "ffmpeg",
-        Arguments = $"-hide_banner -loglevel panic -i \"{path}\" -ac 2 -f s16le -ar 48000 pipe:1",
+        Arguments = $"-hide_banner -loglevel panic -i \"{path}\" -ac 2 -f s16le -ar 48000 -bufsize 512k pipe:1",
         UseShellExecute = false,
-        //ffmpeg -hide_banner -loglevel panic -i -C:/Users/leott/Documents/bot_boi/bot_boi/data/file_example_MP3_1MG.mp3 ac 2 -f s16le -ar 48000 pipe:1
-        RedirectStandardOutput = true
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        CreateNoWindow = true
       }
     };
   }
 
-  private void DisconectVc()
+  public void Disconect(SocketSlashCommand command)
   {
-    if (this.AudioCLient != null && this.AudioCLient.ConnectionState == ConnectionState.Connected)
+    if (AudioCLient != null && AudioCLient.ConnectionState == ConnectionState.Connected)
     {
-      this.AudioCLient.Dispose();
-      this.AudioCLient = null;
+      SongQueue.Clear();
+      PauseEvent.Set();
+      CurrentPlaybackState = PlaybackState.Stopped;
+      AudioCLient.Dispose();
+      AudioCLient = null;
     }
-  }
 
-  public void disconect(SocketSlashCommand command)
-  {
-    DisconectVc();
     command.RespondAsync("Disconecting...");
   }
 
-  private async Task AddToQueueAsync(string url, SocketSlashCommand command)
+  public async void Pause(SocketSlashCommand command)
   {
-    SongQueue.Enqueue(url);
-    await command.RespondAsync($"Added to the queue {url}");
+    if (CurrentPlaybackState == PlaybackState.Playing)
+    {
+      PauseEvent.Reset();
+      CurrentPlaybackState = PlaybackState.Paused;
+      Console.WriteLine("Playback Paused");
+      await command.RespondAsync("Paused");
+    }
+    else if (CurrentPlaybackState == PlaybackState.Paused)
+    {
+      PauseEvent.Set();
+      CurrentPlaybackState = PlaybackState.Playing;
+      await command.RespondAsync("Playback Unpaused");
+      Console.WriteLine("Unpaused");
+    }
+    else
+    {
+      Console.WriteLine("Canot Pause");
+    }
   }
 }
