@@ -58,10 +58,10 @@ namespace bot_boi.Command
 
     public async Task ClientReady()
     {
-      ulong guildid = ulong.Parse(_config["SERVER_ID"]);
+      ulong guildid = ulong.Parse(_config["SERVER_ID"]!);
       SocketGuild guild = _client.GetGuild(guildid);
 
-      string Clear = _config["CLEAR_COMMANDS"];
+      string Clear = _config["CLEAR_COMMANDS"]!;
       if (Clear == "True")
       {
         ClearCommands(guild);

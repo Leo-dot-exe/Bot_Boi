@@ -6,17 +6,20 @@ using Discord.Audio;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
 using System.Collections.Concurrent;
-using Microsoft.Extensions.FileSystemGlobbing.Internal.PathSegments;
+using System.Runtime.CompilerServices;
 
 namespace bot_boi.utils.subCommands.Music_Boi;
 
+// TODO 
+// Add Skiping
+// Add youtube 
 public class Music_Boi_CommandBuilder
 {
   public static SlashCommandOptionBuilder Play_Command()
   {
     return new SlashCommandOptionBuilder()
-      .WithName("play")
-      .WithDescription("Play audio from a youtube video")
+      .WithName("add")
+      .WithDescription("Add a youtube video to the queue!")
       .WithType(ApplicationCommandOptionType.SubCommand)
       .AddOption("link", ApplicationCommandOptionType.String, "youtube link", isRequired: true);
   }
@@ -30,7 +33,7 @@ public class Music_Boi_CommandBuilder
   public static SlashCommandOptionBuilder Pause_Command()
   {
     return new SlashCommandOptionBuilder()
-      .WithName("toggle pause")
+      .WithName("toggle_pause")
       .WithDescription("pauses / plays the current audio")
       .WithType(ApplicationCommandOptionType.SubCommand);
   }
@@ -61,13 +64,13 @@ public class Music_Boi_CommandHandler
 
     switch (name)
     {
-      case "play":
+      case "add":
         _Logic.play(command, _Client);
         break;
       case "disconect":
         _Logic.Disconect(command);
         break;
-      case "pause":
+      case "toggle_pause":
         _Logic.Pause(command);
         break;
     }
@@ -91,7 +94,7 @@ public class Music_BoiLogic
   public async void play(SocketSlashCommand command, DiscordSocketClient client)
   {
     //get url
-    var subCommand = command.Data.Options.FirstOrDefault(option => option.Name == "play"); //name of sub command
+    var subCommand = command.Data.Options.FirstOrDefault(option => option.Name == "add"); //name of sub command
     if (subCommand == null) { await command.RespondAsync("ERROR WITH SUB COMMAND"); return; }
     var nameOption = subCommand.Options.FirstOrDefault(option => option.Name == "link"); //Name of Option
     if (nameOption == null) { await command.RespondAsync("ERROR WITH NAME OPTION"); return; }
@@ -154,7 +157,6 @@ public class Music_BoiLogic
       {
         await command.RespondAsync($"Added to the queue {url}");
       }
-      // await SendAsyncAudio(this.AudioCLient!, "C:/Users/leott/Documents/bot_boi/bot_boi/data/file_example_MP3_1MG.mp3"); TODO
       SongQueue.Enqueue(url);
       if (CurrentPlaybackState == PlaybackState.Stopped)
       {
@@ -208,7 +210,28 @@ public class Music_BoiLogic
         break; // Exit the loop if the queue is empty
       }
 
-      var ffmpeg = CreateStream("C:/Users/leott/Documents/bot_boi/bot_boi/data/file_example_MP3_1MG.mp3"); //CHANGE TO CURRENT SONG
+      //YT STUFF
+      string sourcePath;
+
+      if (Uri.IsWellFormedUriString(currentSong, UriKind.Absolute) && currentSong.Contains("youtube.com"))
+      {
+        try
+        {
+          sourcePath = await GetYtAudioUrl(currentSong);
+        }
+        catch (Exception e)
+        {
+          System.Console.WriteLine($"Cant fetch youtube url {e}");
+          continue;
+        }
+      }
+      else
+      {
+        sourcePath = currentSong;
+      }
+
+
+      var ffmpeg = CreateStream(sourcePath); //CHANGE TO URL
       ffmpeg.Start();
 
       CurrentPlaybackState = PlaybackState.Playing;
@@ -219,18 +242,17 @@ public class Music_BoiLogic
       try
       {
         Console.WriteLine("Playing");
-        // await output.CopyToAsync(discord);
 
         while (true)
         {
           PauseEvent.Wait(); //wait if paused
           byte[] buffer = new byte[3840];
-          int bytedRead = await output.ReadAsync(buffer, 0, buffer.Length);
+          int byteRead = await output.ReadAsync(buffer, 0, buffer.Length);
 
-          if (bytedRead == 0)
+          if (byteRead == 0)
             break;
 
-          await discord.WriteAsync(buffer, 0, bytedRead);
+          await discord.WriteAsync(buffer, 0, byteRead);
         }
       }
       catch (Exception e)
@@ -264,6 +286,32 @@ public class Music_BoiLogic
         CreateNoWindow = true
       }
     };
+  }
+
+  private async Task<string> GetYtAudioUrl(string Url)
+  {
+    var processInfo = new ProcessStartInfo
+    {
+      FileName = "C:/Users/leott/Documents/bot_boi/bot_boi/data/yt-dlp.exe",
+      Arguments = $"-f bestaudio --get-url \"{Url}\"",
+      RedirectStandardOutput = true,
+      UseShellExecute = false,
+      CreateNoWindow = true
+    };
+
+    using (var process = Process.Start(processInfo))
+    {
+      if (process == null)
+        throw new InvalidOperationException("yt-dlp no workie");
+
+      string audioUrl = await process.StandardOutput.ReadToEndAsync();
+      process.WaitForExit();
+
+      if (string.IsNullOrWhiteSpace(audioUrl))
+        throw new Exception("canot retreve url");
+
+      return audioUrl.Trim();
+    }
   }
 
   public void Disconect(SocketSlashCommand command)
