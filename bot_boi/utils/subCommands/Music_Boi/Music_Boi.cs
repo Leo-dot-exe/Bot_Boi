@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Discord;
 using Discord.WebSocket;
 using Discord.Commands;
@@ -6,13 +7,11 @@ using Discord.Audio;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
 using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
 
 namespace bot_boi.utils.subCommands.Music_Boi;
 
 // TODO 
 // Add Skiping
-// Add youtube 
 public class Music_Boi_CommandBuilder
 {
   public static SlashCommandOptionBuilder Play_Command()
@@ -218,10 +217,11 @@ public class Music_BoiLogic
         try
         {
           sourcePath = await GetYtAudioUrl(currentSong);
+          System.Console.WriteLine("BANANA GETTING NEW U TUB");
         }
         catch (Exception e)
         {
-          System.Console.WriteLine($"Cant fetch youtube url {e}");
+          Console.WriteLine($"Cant fetch youtube url: {e}");
           continue;
         }
       }
@@ -290,10 +290,13 @@ public class Music_BoiLogic
 
   private async Task<string> GetYtAudioUrl(string Url)
   {
+    File.Delete("outAudio.mp3");
+
     var processInfo = new ProcessStartInfo
     {
-      FileName = "C:/Users/leott/Documents/bot_boi/bot_boi/data/yt-dlp.exe",
-      Arguments = $"-f bestaudio --get-url \"{Url}\"",
+      FileName = "yt-dlp",
+      // Arguments = $"-f bestaudio --get-url \"{Url}\"",
+      Arguments = $"-f bestaudio -o \"outAudio.mp3\" \"{Url}\"",
       RedirectStandardOutput = true,
       UseShellExecute = false,
       CreateNoWindow = true
@@ -310,7 +313,8 @@ public class Music_BoiLogic
       if (string.IsNullOrWhiteSpace(audioUrl))
         throw new Exception("canot retreve url");
 
-      return audioUrl.Trim();
+      // return audioUrl.Trim();
+      return "outAudio.mp3";
     }
   }
 
